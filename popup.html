@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Injector</title>
+
+    <style type="text/css">
+        #editor {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    
+        #status {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            font-size: 17px;
+            padding: 5px;
+            background-color: gray;
+            z-index: 999;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <!-- Code editor -->
+    <div id="editor"></div>
+
+    <!-- Status icon -->
+    <div id="status"></div>
+
+    <script type="text/javascript" src="acejs-min/ace.js"></script>
+    <script type="text/javascript" src="popup.js"></script>
+</body>
+</html>
