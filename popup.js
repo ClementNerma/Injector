@@ -53,7 +53,7 @@ if (typeof chrome === 'undefined' || typeof chrome.tabs === 'undefined' || typeo
 let domain = null;
 
 // Parse the domain & load saved data for this domain
-chrome.tabs.query({ active: true }, tabs => {
+chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     // Parse the domain
     const _domain = tabs[0].url.match(/^[a-zA-Z]+:\/\/\/?([^\/]+)(?=$|\/.*$)/);
 
