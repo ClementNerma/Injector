@@ -52,6 +52,9 @@ if (typeof chrome === 'undefined' || typeof chrome.tabs === 'undefined' || typeo
 /** Domain name (e.g. "google.fr") - no protocol name, no path, no query parameters, no hashname */
 let domain = null;
 
+/** Current tab's ID */
+let tabId = null;
+
 // Parse the domain & load saved data for this domain
 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     // Parse the domain
@@ -64,6 +67,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     domain = _domain[1];
 
     console.debug('Parsed domain: ' + domain);
+
+    tabId = tabs[0].id;
 
     // Load saved data for this domain
     chrome.storage.sync.get(null, scripts => {
@@ -172,7 +177,10 @@ editor.commands.addCommand({
         mac: 'Ctrl-Enter'
     },
     // Only exit if the saves were successfully saved
-    exec: () => onChange().then(() => window.close())
+    exec: () => onChange().then(() => {
+        window.close();
+        chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
+    })
 });
 
 /// ========== Finalize ========== ///
