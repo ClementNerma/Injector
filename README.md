@@ -12,6 +12,12 @@ _Injector_ is a Chromium extension that allow you to inject a JavaScript code in
 
 You can also press `Ctrl-Q` to save and quit, without reloading the page.
 
+## Synchronization
+
+Your scripts are synchronized between all computers through your Google account thanks to the [`chrome.storage.sync`](https://developer.chrome.com/extensions/storage) API.
+
+You can still load and save scripts offline, though.
+
 ## License
 
 This project is released under the [Apache-2.0](LICENSE.md) license terms.
