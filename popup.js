@@ -166,6 +166,8 @@ editor.session.on('change', () => {
 
     // Save after 500 ms
     updateInterval = setTimeout(() => onChange(), 500);
+
+    setStatus('✍️', 'Waiting to save changes...');
 });
 
 /// ========== Keyboard shortcuts ========== ///
