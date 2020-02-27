@@ -17,12 +17,12 @@
         },
 
         "default_title": "Injector",
-        "default_popup": "popup.html"
+        "default_popup": "src/popup.html"
     },
 
     "background": {
         "scripts": [
-            "background.js"
+            "src/background.js"
         ]
     },
 
