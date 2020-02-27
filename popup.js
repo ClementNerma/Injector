@@ -67,8 +67,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
 
     // Load saved data for this domain
     chrome.storage.sync.get(null, scripts => {
-        console.log(scripts);
-
         if (scripts[domain] !== undefined) {
             editor.session.setValue(scripts[domain]);
             editor.gotoLine(Infinity, Infinity);
