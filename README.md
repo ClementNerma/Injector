@@ -10,6 +10,8 @@ _Injector_ is a Chromium extension that allow you to inject a JavaScript code in
 4. Wait a bit for the changes to be saved (check icon on the bottom right of the popup), or press `Ctrl-Enter` to save and exit
 5. The page will be refreshed ; your script will now be ran each time you visit this (sub-)domain
 
+You can also press `Ctrl-Q` to save and quit, without reloading the page.
+
 ## License
 
 This project is released under the [Apache-2.0](LICENSE.md) license terms.

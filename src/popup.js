@@ -173,7 +173,7 @@ editor.session.on('change', () => {
 /// ========== Keyboard shortcuts ========== ///
 
 editor.commands.addCommand({
-    name: 'saveAndExit',
+    name: 'saveAndReload',
     bindKey: {
         win: 'Ctrl-Enter',
         mac: 'Ctrl-Enter'
@@ -183,6 +183,16 @@ editor.commands.addCommand({
         window.close();
         chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
     })
+});
+
+editor.commands.addCommand({
+    name: 'saveAndExit',
+    bindKey: {
+        win: 'Ctrl-Q',
+        mac: 'Ctrl-Q'
+    },
+    // Only exit if the saves were successfully saved
+    exec: () => onChange().then(() => window.close())
 });
 
 /// ========== Finalize ========== ///
