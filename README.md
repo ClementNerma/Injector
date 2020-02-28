@@ -12,6 +12,10 @@ _Injector_ is a Chromium extension that allow you to inject a JavaScript code in
 
 You can also press `Ctrl-Q` to save and quit, without reloading the page.
 
+## Scripts prelude
+
+All scripts get access to a `prelude` object, which is declared in [`src/prelude.js`](src/prelude.js).
+
 ## Synchronization
 
 Your scripts are synchronized between all computers through your Google account thanks to the [`chrome.storage.sync`](https://developer.chrome.com/extensions/storage) API.
