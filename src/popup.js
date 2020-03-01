@@ -1,5 +1,9 @@
 "use strict";
 
+// ========== Constants ========== ///
+
+const SUPPORTED_PROTOCOLS = ['http', 'https', 'ftp', 'sftp', 'file'];
+
 // ========== Init ========== ///
 
 /**
@@ -209,13 +213,17 @@ function startup() {
 // Parse the domain & load saved data for this domain
 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     // Parse the domain
-    const _domain = tabs[0].url.match(/^[a-zA-Z]+:\/\/\/?([^\/]+)(?=$|\/.*$)/);
+    const match = tabs[0].url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/);
 
-    if (!_domain) {
+    if (!match) {
         return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
     }
 
-    currentDomain = _domain[1];
+    if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
+        return loadingError(`Unsupported protocol "${match[1]}".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(', ')}.`);
+    }
+
+    currentDomain = match[2];
 
     console.debug('Parsed domain: ' + currentDomain);
 
