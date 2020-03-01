@@ -256,7 +256,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
         addChoice('<prelude>');
 
         for (const otherDomain of savedDomains.sort()) {
-            if (otherDomain !== currentDomain) {
+            if (otherDomain !== currentDomain && otherDomain !== '<prelude>') {
                 addChoice(otherDomain);
             }
         }
