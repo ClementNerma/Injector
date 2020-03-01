@@ -7,14 +7,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             return;
         }
 
-        const _domain = tab.url.match(/^[a-zA-Z]+:\/\/\/?([^\/]+)(?=$|\/.*$)/);
+        const _domain = tab.url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/);
 
         if (!_domain) {
             console.debug(`Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`);
             return;
         }
 
-        const domain = _domain[1];
+        if (!['http', 'https', 'ftp', 'sftp', 'file'].includes(_domain[1])) {
+            console.debug(`Ignoring script injection for unsupported protocol "${_domain[1]}"`);
+            return ;
+        }
+
+        const domain = _domain[2];
 
         chrome.storage.sync.get(null, scripts => {
             if (scripts[domain] !== undefined) {
