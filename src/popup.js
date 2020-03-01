@@ -22,6 +22,10 @@ const statusBar = document.getElementById('status');
 
 /// ========== Loading ========== ///
 
+/**
+ * Load script of a given domain
+ * @param {string} domain 
+ */
 function load(domain) {
     setStatus('⌛', 'Loading saved data...');
     editor.setTheme('ace/theme/monokai');
@@ -70,6 +74,7 @@ function load(domain) {
         editor.setReadOnly(false);
         editor.focus();
 
+        console.debug('Loaded script for domain: ' + domain);
         setStatus('✔️', 'Loaded saved script');
     });
 }
@@ -187,6 +192,10 @@ let pendingUpdate = false;
 
 /// ========== Start ========== ///
 
+/**
+ * Initialize the program
+ * Called automatically after retrieving the current domain name and tab identifier
+ */
 function startup() {
     editor.session.setMode('ace/mode/javascript');
 
@@ -243,7 +252,6 @@ function startup() {
     });
 }
 
-
 // Parse the domain & load saved data for this domain
 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     // Parse the domain
@@ -267,6 +275,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
         // Initialize the domain selector
         const savedDomains = Reflect.ownKeys(scripts);
 
+        // Add a choice to the domain selector
         const addChoice = domain => {
             const choice = document.createElement('option');
             choice.setAttribute('value', domain);
@@ -275,9 +284,13 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
             selector.appendChild(choice);
         };
 
+        // Current domain
         addChoice(currentDomain);
+
+        // Prelude script
         addChoice('<prelude>');
 
+        // All other domains, sorted by name
         for (const otherDomain of savedDomains.sort()) {
             if (otherDomain !== currentDomain && otherDomain !== '<prelude>') {
                 addChoice(otherDomain);
