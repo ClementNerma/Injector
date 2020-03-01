@@ -50,18 +50,14 @@ function load(domain) {
             editor.gotoLine(Infinity, Infinity);
         }
 
-        else if (domain === currentDomain) {
+        else if (domain === currentDomain || domain === '<prelude>') {
+            const description = domain === '<prelude>'
+                ? '// A script that is inserted before every other scripts'
+                : '// The <prelude> script is inserted before each script';
+
             setContent([
-                '// The <prelude> script is inserted before each script',
-                '// You may access informations about the current tab with the "__tab" constant',
-                ''
-            ].join('\n'));
-        }
-        
-        else if (domain === '<prelude>') {
-            setContent([
-                '// A script that is inserted before every other scripts',
-                '// Be aware that the limit for each script is 8 KB!',
+                description,
+                '// The size limit for all scripts is 8 KB',
                 '// You may access informations about the current tab with the "__tab" constant',
                 ''
             ].join('\n'));
