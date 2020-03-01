@@ -43,7 +43,18 @@ function load(domain) {
 
         else {
             if (domain === currentDomain) {
-                editor.session.setValue('');
+                editor.session.setValue([
+                    '// The <prelude> script is inserted before each script',
+                    '// You may access informations about the current tab with the "__tab" constant',
+                    ''
+                ].join('\n'));
+            } else if (domain === '<prelude>') {
+                editor.session.setValue([
+                    '// A script that is inserted before every other scripts',
+                    '// Be aware that the limit for each script is 8 KB!',
+                    '// You may access informations about the current tab with the "__tab" constant',
+                    ''
+                ].join('\n'));
             } else {
                 setStatus('❌', 'Internal error: no data found for non-current domain');
                 return;
@@ -233,22 +244,21 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
         // Initialize the domain selector
         const savedDomains = Reflect.ownKeys(scripts);
 
-        const choice = document.createElement('option');
-        choice.setAttribute('value', currentDomain);
-        choice.innerText = currentDomain;
-
-        selector.appendChild(choice);
-
-        for (const otherDomain of savedDomains.sort()) {
-            if (otherDomain === currentDomain) {
-                continue;
-            }
-
+        const addChoice = domain => {
             const choice = document.createElement('option');
-            choice.setAttribute('value', otherDomain);
-            choice.innerText = otherDomain;
+            choice.setAttribute('value', domain);
+            choice.innerText = domain;
 
             selector.appendChild(choice);
+        };
+
+        addChoice(currentDomain);
+        addChoice('<prelude>');
+
+        for (const otherDomain of savedDomains.sort()) {
+            if (otherDomain !== currentDomain) {
+                addChoice(otherDomain);
+            }
         }
 
         // Listen to domain selection
