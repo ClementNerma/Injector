@@ -62,11 +62,9 @@ function load(domain) {
                 ''
             ].join('\n'));
         }
-        
+
         else {
-            setContent('ERROR: Internal error: no data found for domain "' + domain + '"');
-            setStatus('❌', 'Internal error: no data found for non-current domain');
-            return;
+            setContent('');
         }
 
         editor.setReadOnly(false);
