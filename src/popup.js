@@ -239,7 +239,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
 
         selector.appendChild(choice);
 
-        for (const otherDomain of savedDomains) {
+        for (const otherDomain of savedDomains.sort()) {
             if (otherDomain === currentDomain) {
                 continue;
             }
