@@ -6,9 +6,19 @@
     <title>Injector</title>
 
     <style type="text/css">
-        #editor {
+        #domain-selector {
             position: absolute;
             top: 0;
+            left: 0;
+            right: 0;
+            min-height: 20px;
+            height: 20px;
+            max-height: 20px;
+        }
+
+        #editor {
+            position: absolute;
+            top: 20px;
             left: 0;
             right: 0;
             bottom: 0;
@@ -27,9 +37,12 @@
     </style>
 </head>
 <body>
+    <!-- Domain selector -->
+    <select id="domain-selector"></select>
+
     <!-- Code editor -->
     <div id="editor"></div>
-
+    
     <!-- Status icon -->
     <div id="status"></div>
 

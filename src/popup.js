@@ -12,18 +12,46 @@ function setStatus(icon, tooltip) {
     statusBar.setAttribute('title', tooltip);
 }
 
-const statusBar = document.getElementById('status');
-setStatus('⌛', 'Loading saved data...');
-
+const selector = document.getElementById('domain-selector');
 const editor = ace.edit('editor');
-editor.setTheme('ace/theme/monokai');
-editor.setShowPrintMargin(false);
-editor.setFontSize('14px');
-
-// Make the editor read-only until it's ready
-editor.setReadOnly(true);
+const statusBar = document.getElementById('status');
 
 /// ========== Loading ========== ///
+
+function load(domain) {
+    setStatus('⌛', 'Loading saved data...');
+    editor.setTheme('ace/theme/monokai');
+    editor.setShowPrintMargin(false);
+    editor.setFontSize('14px');
+
+    // Make the editor read-only until it's ready
+    editor.setReadOnly(true);
+
+    // Save current domain
+    selectedDomain = domain;
+
+    // Load saved data for this domain
+    chrome.storage.sync.get(null, scripts => {
+        if (scripts[domain] !== undefined) {
+            editor.session.setValue(scripts[domain]);
+            editor.gotoLine(Infinity, Infinity);
+        }
+
+        else {
+            if (domain === currentDomain) {
+                editor.session.setValue('');
+            } else {
+                setStatus('❌', 'Internal error: no data found for non-current domain');
+                return;
+            }
+        }
+
+        editor.setReadOnly(false);
+        editor.focus();
+
+        setStatus('✔️', 'Loaded saved script');
+    });
+}
 
 /**
  * Throw an error during loading time
@@ -48,40 +76,6 @@ function loadingError(msg) {
 if (typeof chrome === 'undefined' || typeof chrome.tabs === 'undefined' || typeof chrome.storage === 'undefined') {
     loadingError('Chrome APIs are not available');
 }
-
-/** Domain name (e.g. "google.fr") - no protocol name, no path, no query parameters, no hashname */
-let domain = null;
-
-/** Current tab's ID */
-let tabId = null;
-
-// Parse the domain & load saved data for this domain
-chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-    // Parse the domain
-    const _domain = tabs[0].url.match(/^[a-zA-Z]+:\/\/\/?([^\/]+)(?=$|\/.*$)/);
-
-    if (!_domain) {
-        loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
-    }
-
-    domain = _domain[1];
-
-    console.debug('Parsed domain: ' + domain);
-
-    tabId = tabs[0].id;
-
-    // Load saved data for this domain
-    chrome.storage.sync.get(null, scripts => {
-        if (scripts[domain] !== undefined) {
-            editor.session.setValue(scripts[domain]);
-            editor.gotoLine(Infinity, Infinity);
-        }
-
-        editor.session.setMode('ace/mode/javascript');
-        editor.setReadOnly(false);
-        setStatus('✔️', 'Loaded saved script');
-    });
-});
 
 /// ========== Saving ========== ///
 
@@ -132,8 +126,8 @@ function updateCode(code) {
                 reject();
             } else {
                 console.debug(code.length === 0
-                    ? 'Removed script for this domain from storage'
-                    : 'Saved script for this domain to storage'
+                    ? 'Removed script for domain "' + selectedDomain + '" from storage'
+                    : 'Saved script for domain "' + selectedDomain + '" to storage'
                 );
 
                 setStatus('✔️', 'Saved changes');
@@ -142,12 +136,21 @@ function updateCode(code) {
         }
 
         if (code.length === 0) {
-            chrome.storage.sync.remove(domain, callback);
+            chrome.storage.sync.remove(selectedDomain, callback);
         } else {
-            chrome.storage.sync.set({ [domain]: code }, callback);
+            chrome.storage.sync.set({ [selectedDomain]: code }, callback);
         }
     });
 }
+
+/** Domain name (e.g. "google.fr") - no protocol name, no path, no query parameters, no hashname */
+let currentDomain = null;
+
+/** Selected domain */
+let selectedDomain = null;
+
+/** Current tab's ID */
+let tabId = null;
 
 /** Result of setTimeout() when changes are detected */
 let updateInterval = null;
@@ -158,44 +161,97 @@ let isSaving = false;
 /** Was there an attempt to save changes while older changes were already being saved? */
 let pendingUpdate = false;
 
-// Detect changes
-editor.session.on('change', () => {
-    if (updateInterval !== null) {
-        clearTimeout(updateInterval);
+/// ========== Start ========== ///
+
+
+function startup() {
+    editor.session.setMode('ace/mode/javascript');
+
+    // Detect changes
+    editor.session.on('change', () => {
+        if (updateInterval !== null) {
+            clearTimeout(updateInterval);
+        }
+
+        // Save after 500 ms
+        updateInterval = setTimeout(() => onChange(), 500);
+
+        setStatus('✍️', 'Waiting to save changes...');
+    });
+
+    /// ========== Keyboard shortcuts ========== ///
+
+    editor.commands.addCommand({
+        name: 'saveAndReload',
+        bindKey: {
+            win: 'Ctrl-Enter',
+            mac: 'Ctrl-Enter'
+        },
+        // Only exit if the saves were successfully saved
+        exec: () => onChange().then(() => {
+            window.close();
+            chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
+        })
+    });
+
+    editor.commands.addCommand({
+        name: 'saveAndExit',
+        bindKey: {
+            win: 'Ctrl-Q',
+            mac: 'Ctrl-Q'
+        },
+        // Only exit if the saves were successfully saved
+        exec: () => onChange().then(() => window.close())
+    });
+}
+
+
+// Parse the domain & load saved data for this domain
+chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    // Parse the domain
+    const _domain = tabs[0].url.match(/^[a-zA-Z]+:\/\/\/?([^\/]+)(?=$|\/.*$)/);
+
+    if (!_domain) {
+        return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
     }
 
-    // Save after 500 ms
-    updateInterval = setTimeout(() => onChange(), 500);
+    currentDomain = _domain[1];
 
-    setStatus('✍️', 'Waiting to save changes...');
+    console.debug('Parsed domain: ' + currentDomain);
+
+    tabId = tabs[0].id;
+
+    chrome.storage.sync.get(null, scripts => {
+        // Initialize the domain selector
+        const savedDomains = Reflect.ownKeys(scripts);
+
+        const choice = document.createElement('option');
+        choice.setAttribute('value', currentDomain);
+        choice.innerText = currentDomain;
+
+        selector.appendChild(choice);
+
+        for (const otherDomain of savedDomains) {
+            if (otherDomain === currentDomain) {
+                continue;
+            }
+
+            const choice = document.createElement('option');
+            choice.setAttribute('value', otherDomain);
+            choice.innerText = otherDomain;
+
+            selector.appendChild(choice);
+        }
+
+        // Listen to domain selection
+        selector.addEventListener('change', () => {
+            load(selector.options[selector.selectedIndex].getAttribute('value'));
+        });
+
+        // Start everything up
+        startup();
+
+        // Load saved data for this domain
+        load(currentDomain);
+    });
 });
-
-/// ========== Keyboard shortcuts ========== ///
-
-editor.commands.addCommand({
-    name: 'saveAndReload',
-    bindKey: {
-        win: 'Ctrl-Enter',
-        mac: 'Ctrl-Enter'
-    },
-    // Only exit if the saves were successfully saved
-    exec: () => onChange().then(() => {
-        window.close();
-        chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
-    })
-});
-
-editor.commands.addCommand({
-    name: 'saveAndExit',
-    bindKey: {
-        win: 'Ctrl-Q',
-        mac: 'Ctrl-Q'
-    },
-    // Only exit if the saves were successfully saved
-    exec: () => onChange().then(() => window.close())
-});
-
-/// ========== Finalize ========== ///
-
-// Focus on the editor
-editor.focus();
