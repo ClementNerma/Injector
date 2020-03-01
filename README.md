@@ -14,7 +14,9 @@ You can also press `Ctrl-Q` to save and quit, without reloading the page.
 
 ## Scripts prelude
 
-All scripts get access to a `prelude` object, which is declared in [`src/prelude.js`](src/prelude.js).
+Before each domain's script, a _prelude_ script is inserted. It contains nothing by default but can be changed through the `<prelude>` option in the popup's dropdown.
+
+Also, all scripts (including the prelude) have access to the `__tab` object, which contains informations on the active tab. It's a [`chrome.tabs.Tab`](https://developer.chrome.com/extensions/tabs#type-Tab).
 
 ## Synchronization
 
