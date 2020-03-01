@@ -18,7 +18,7 @@ setStatus('⌛', 'Loading saved data...');
 const editor = ace.edit('editor');
 editor.setTheme('ace/theme/monokai');
 editor.setShowPrintMargin(false);
-editor.setFontSize('17px');
+editor.setFontSize('14px');
 
 // Make the editor read-only until it's ready
 editor.setReadOnly(true);
