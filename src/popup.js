@@ -89,13 +89,12 @@ function loadingError(msg) {
     if (editor.renderer.$cursorLayer) {
         editor.renderer.$cursorLayer.element.style.display = 'none';
     }
-
-    throw new Error(msg);
 }
 
 // Ensure Chrome APIs are available
 if (typeof chrome === 'undefined' || typeof chrome.tabs === 'undefined' || typeof chrome.storage === 'undefined') {
     loadingError('Chrome APIs are not available');
+    throw new Error('Chrome APIs are not available');
 }
 
 /// ========== Saving ========== ///
