@@ -36,29 +36,37 @@ function load(domain) {
 
     // Load saved data for this domain
     chrome.storage.sync.get(null, scripts => {
+        const setContent = code => {
+            lastContent = code;
+            editor.session.setValue(code);
+        };
+
         if (scripts[domain] !== undefined) {
-            editor.session.setValue(scripts[domain]);
+            setContent(scripts[domain]);
             editor.gotoLine(Infinity, Infinity);
         }
 
+        else if (domain === currentDomain) {
+            setContent([
+                '// The <prelude> script is inserted before each script',
+                '// You may access informations about the current tab with the "__tab" constant',
+                ''
+            ].join('\n'));
+        }
+        
+        else if (domain === '<prelude>') {
+            setContent([
+                '// A script that is inserted before every other scripts',
+                '// Be aware that the limit for each script is 8 KB!',
+                '// You may access informations about the current tab with the "__tab" constant',
+                ''
+            ].join('\n'));
+        }
+        
         else {
-            if (domain === currentDomain) {
-                editor.session.setValue([
-                    '// The <prelude> script is inserted before each script',
-                    '// You may access informations about the current tab with the "__tab" constant',
-                    ''
-                ].join('\n'));
-            } else if (domain === '<prelude>') {
-                editor.session.setValue([
-                    '// A script that is inserted before every other scripts',
-                    '// Be aware that the limit for each script is 8 KB!',
-                    '// You may access informations about the current tab with the "__tab" constant',
-                    ''
-                ].join('\n'));
-            } else {
-                setStatus('❌', 'Internal error: no data found for non-current domain');
-                return;
-            }
+            setContent('ERROR: Internal error: no data found for domain "' + domain + '"');
+            setStatus('❌', 'Internal error: no data found for non-current domain');
+            return;
         }
 
         editor.setReadOnly(false);
@@ -167,6 +175,9 @@ let selectedDomain = null;
 /** Current tab's ID */
 let tabId = null;
 
+/** Editor's last content (used to check if changes have been made) */
+let lastContent = null;
+
 /** Result of setTimeout() when changes are detected */
 let updateInterval = null;
 
@@ -178,12 +189,26 @@ let pendingUpdate = false;
 
 /// ========== Start ========== ///
 
-
 function startup() {
     editor.session.setMode('ace/mode/javascript');
 
     // Detect changes
-    editor.session.on('change', () => {
+    editor.addEventListener('input', () => {
+        // This event may be triggered by API calls such as ".setValue()" and in specific situations.
+        // This is why we use a diffing variable to check if changes have to be made.
+
+        const content = editor.session.getValue();
+        
+        // If content's length has changed, there are changes of course
+        if (content.length === lastContent.length) {
+            // If the length is the same, we have to compare the actual content
+            if (content === lastContent) {
+                return ;
+            }
+        }
+
+        lastContent = content;
+
         if (updateInterval !== null) {
             clearTimeout(updateInterval);
         }
