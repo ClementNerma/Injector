@@ -291,6 +291,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
             }
         }
 
+        // Select current domain
+        selector.selectedIndex = 1;
+
         // Listen to domain selection
         selector.addEventListener('change', () => {
             load(selector.options[selector.selectedIndex].getAttribute('value'));
