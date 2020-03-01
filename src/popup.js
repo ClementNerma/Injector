@@ -279,11 +279,11 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
             selector.appendChild(choice);
         };
 
-        // Current domain
-        addChoice(currentDomain);
-
         // Prelude script
         addChoice('<prelude>');
+
+        // Current domain
+        addChoice(currentDomain);
 
         // All other domains, sorted by name
         for (const otherDomain of savedDomains.sort()) {
