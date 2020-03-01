@@ -84,7 +84,6 @@ function load(domain) {
  * @param {string} msg Error message
  */
 function loadingError(msg) {
-    editor.session.setValue(msg);
     editor.session.setValue(`ERROR: ${msg}`);
 
     setStatus('❌', msg);
