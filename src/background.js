@@ -31,97 +31,64 @@ function fetchInternal(uri) {
     });
 }
 
-let DEFAULT_PRELUDE = null;
-let DEFAULT_DOMAIN_SCRIPT = null;
+async function main() {
+    const DEFAULT_PRELUDE = await fetchInternal("src/defaults/prelude.js");
+    const DEFAULT_DOMAIN_SCRIPT = await fetchInternal("src/defaults/domain.js");
 
-fetchInternal("src/defaults/prelude.js")
-    .then((script) => (DEFAULT_PRELUDE = script))
-    .catch(() => (DEFAULT_PRELUDE = false));
-
-fetchInternal("src/defaults/domain.js")
-    .then((script) => (DEFAULT_DOMAIN_SCRIPT = script))
-    .catch(() => (DEFAULT_DOMAIN_SCRIPT = false));
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === "complete") {
-        if (!tab.url) {
-            console.debug(
-                "Encountered tab without URL (probably a browser internal page)"
-            );
-            return;
-        }
-
-        const _domain = tab.url.match(
-            /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
-        );
-
-        if (!_domain) {
-            console.debug(
-                `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
-            );
-            return;
-        }
-
-        if (!["http", "https", "ftp", "sftp", "file"].includes(_domain[1])) {
-            console.debug(
-                `Ignoring script injection for unsupported protocol "${_domain[1]}"`
-            );
-            return;
-        }
-
-        const domain = _domain[2];
-
-        chrome.storage.sync.get(null, (scripts) => {
-            let prelude = scripts["<prelude>"];
-
-            if (prelude === undefined) {
-                if (typeof DEFAULT_PRELUDE === "string") {
-                    prelude = DEFAULT_PRELUDE;
-                } else if (DEFAULT_PRELUDE === false) {
-                    console.warn(
-                        `Cannot run script for domain "${domain}" as the default prelude failed to load!`
-                    );
-                    return;
-                } else {
-                    console.warn(
-                        `Cannot run script for domain "${domain}" as the default prelude is still being fetched...`
-                    );
-                    return;
-                }
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === "complete") {
+            if (!tab.url) {
+                console.debug(
+                    "Encountered tab without URL (probably a browser internal page)"
+                );
+                return;
             }
 
-            let domainScript = scripts[domain];
+            const _domain = tab.url.match(
+                /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
+            );
 
-            if (domainScript === undefined) {
-                if (typeof DEFAULT_DOMAIN_SCRIPT === "string") {
-                    domainScript = DEFAULT_DOMAIN_SCRIPT;
-                } else if (DEFAULT_DOMAIN_SCRIPT === false) {
-                    console.warn(
-                        `Cannot run empty script for domain "${domain}" as the default domain script failed to load!`
-                    );
-                    return;
-                } else {
-                    console.warn(
-                        `Cannot run empty script for domain "${domain}" as the default domain script is still being fetched...`
-                    );
-                    return;
-                }
+            if (!_domain) {
+                console.debug(
+                    `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
+                );
+                return;
             }
 
-            if (scripts[domain] !== undefined) {
+            if (
+                !["http", "https", "ftp", "sftp", "file"].includes(_domain[1])
+            ) {
+                console.debug(
+                    `Ignoring script injection for unsupported protocol "${_domain[1]}"`
+                );
+                return;
+            }
+
+            const domain = _domain[2];
+
+            chrome.storage.sync.get(null, (scripts) => {
+                if (scripts[domain] === undefined) {
+                    console.debug(
+                        `No saved script was found for domain: ${domain}`
+                    );
+                } else {
+                    console.debug(`Loaded saved script for domain: ${domain}`);
+                }
+
                 const code = [
                     `const __tab = ${JSON.stringify(tab)};`,
-                    prelude,
-                    domainScript,
+                    scripts["<prelude>"] !== undefined
+                        ? scripts["<prelude>"]
+                        : DEFAULT_PRELUDE,
+                    scripts[domain] !== undefined
+                        ? scripts[domain]
+                        : DEFAULT_DOMAIN_SCRIPT,
                 ].join("");
 
                 chrome.tabs.executeScript(tabId, { code });
-                console.debug(`Loaded saved script for domain: ${domain}`);
-            } else {
-                console.debug(
-                    `No saved script was found for domain: ${domain}`
-                );
-            }
-        });
-    }
-});
+            });
+        }
+    });
+}
+
+main();
