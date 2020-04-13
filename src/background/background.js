@@ -50,16 +50,10 @@ function decompress(content) {
     );
 }
 
-/**
- * Background service's main function
- * It is asynchronous to enable usage of `await`
- */
-async function main() {
-    const [DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT] = await Promise.all([
-        fetchInternal("../defaults/prelude.js"),
-        fetchInternal("../defaults/domain.js"),
-    ]);
-
+Promise.all([
+    fetchInternal("../defaults/prelude.js"),
+    fetchInternal("../defaults/domain.js"),
+]).then(([DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT]) => {
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (changeInfo.status === "complete") {
             if (!tab.url) {
@@ -114,6 +108,4 @@ async function main() {
             });
         }
     });
-}
-
-main();
+});
