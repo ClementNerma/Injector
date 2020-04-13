@@ -2,7 +2,7 @@
 
 // ========== Constants ========== ///
 
-const SUPPORTED_PROTOCOLS = ['http', 'https', 'ftp', 'sftp', 'file'];
+const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
 
 let DEFAULT_DOMAIN_SCRIPT = null;
 
@@ -17,14 +17,14 @@ let DEFAULT_PRELUDE = null;
  */
 function setStatus(icon, tooltip) {
     statusBar.innerHTML = icon;
-    statusBar.setAttribute('title', tooltip);
+    statusBar.setAttribute("title", tooltip);
 }
 
-const selector = document.getElementById('domain-selector');
-const editor = ace.edit('editor');
-const toolbox = document.getElementById('toolbox');
-const toolsBtn = document.getElementById('tools');
-const statusBar = document.getElementById('status');
+const selector = document.getElementById("domain-selector");
+const editor = ace.edit("editor");
+const toolbox = document.getElementById("toolbox");
+const toolsBtn = document.getElementById("tools");
+const statusBar = document.getElementById("status");
 
 toolsBtn.addEventListener("click", () => openTools());
 
@@ -35,16 +35,16 @@ let openableToolbox = false;
 
 /**
  * Load script of a given domain
- * @param {string} domain 
+ * @param {string} domain
  */
 function load(domain) {
     openableToolbox = false;
 
-    setStatus('⌛', 'Loading saved data...');
+    setStatus("⌛", "Loading saved data...");
     toolsBtn.innerHTML = "⌛";
-    editor.setTheme('ace/theme/monokai');
+    editor.setTheme("ace/theme/monokai");
     editor.setShowPrintMargin(false);
-    editor.setFontSize('14px');
+    editor.setFontSize("14px");
 
     // Make the editor read-only until it's ready
     editor.setReadOnly(true);
@@ -53,8 +53,8 @@ function load(domain) {
     selectedDomain = domain;
 
     // Load saved data for this domain
-    chrome.storage.sync.get(null, scripts => {
-        const setContent = code => {
+    chrome.storage.sync.get(null, (scripts) => {
+        const setContent = (code) => {
             lastContent = code;
             editor.session.setValue(code);
         };
@@ -62,21 +62,19 @@ function load(domain) {
         if (scripts[domain] !== undefined) {
             setContent(scripts[domain]);
             editor.gotoLine(Infinity, Infinity);
-        }
-
-        else if (domain === currentDomain || domain === '<prelude>') {
-            setContent(domain === "<prelude>" ? DEFAULT_PRELUDE : DEFAULT_DOMAIN_SCRIPT);
-        }
-
-        else {
-            setContent('');
+        } else if (domain === currentDomain || domain === "<prelude>") {
+            setContent(
+                domain === "<prelude>" ? DEFAULT_PRELUDE : DEFAULT_DOMAIN_SCRIPT
+            );
+        } else {
+            setContent("");
         }
 
         editor.setReadOnly(false);
         editor.focus();
 
-        console.debug('Loaded script for domain: ' + domain);
-        setStatus('✔️', 'Loaded saved script');
+        console.debug("Loaded script for domain: " + domain);
+        setStatus("✔️", "Loaded saved script");
 
         toolsBtn.innerHTML = "🛠️";
         openableToolbox = true;
@@ -90,19 +88,23 @@ function load(domain) {
 function loadingError(msg) {
     editor.session.setValue(`ERROR: ${msg}`);
 
-    setStatus('❌', msg);
+    setStatus("❌", msg);
 
     editor.setReadOnly(true);
 
     if (editor.renderer.$cursorLayer) {
-        editor.renderer.$cursorLayer.element.style.display = 'none';
+        editor.renderer.$cursorLayer.element.style.display = "none";
     }
 }
 
 // Ensure Chrome APIs are available
-if (typeof chrome === 'undefined' || typeof chrome.tabs === 'undefined' || typeof chrome.storage === 'undefined') {
-    loadingError('Chrome APIs are not available');
-    throw new Error('Chrome APIs are not available');
+if (
+    typeof chrome === "undefined" ||
+    typeof chrome.tabs === "undefined" ||
+    typeof chrome.storage === "undefined"
+) {
+    loadingError("Chrome APIs are not available");
+    throw new Error("Chrome APIs are not available");
 }
 
 /// ========== Saving ========== ///
@@ -116,11 +118,11 @@ function onChange() {
         pendingUpdate = true;
     }
 
-    setStatus('⌛', 'Saving changes...');
+    setStatus("⌛", "Saving changes...");
 
     const code = editor.session.getValue();
 
-    const conclude = end => {
+    const conclude = (end) => {
         isSaving = false;
 
         if (pendingUpdate) {
@@ -148,17 +150,23 @@ function updateCode(code) {
     return new Promise((resolve, reject) => {
         function callback() {
             if (chrome.runtime.lastError) {
-                const errMsg = 'Failed to save changes: ' + chrome.runtime.lastError;
+                const errMsg =
+                    "Failed to save changes: " + chrome.runtime.lastError;
                 console.error(errMsg);
-                setStatus('❌', errMsg);
+                setStatus("❌", errMsg);
                 reject();
             } else {
-                console.debug(code.length === 0
-                    ? 'Removed script for domain "' + selectedDomain + '" from storage'
-                    : 'Saved script for domain "' + selectedDomain + '" to storage'
+                console.debug(
+                    code.length === 0
+                        ? 'Removed script for domain "' +
+                              selectedDomain +
+                              '" from storage'
+                        : 'Saved script for domain "' +
+                              selectedDomain +
+                              '" to storage'
                 );
 
-                setStatus('✔️', 'Saved changes');
+                setStatus("✔️", "Saved changes");
                 resolve();
             }
         }
@@ -201,84 +209,98 @@ let isToolboxOpened = false;
  * Open the toolbox
  */
 function openTools() {
-  if (!openableToolbox) {
-    alert('The toolbox cannot be opened while a domain script is loading or failed to load.');
-    return ;
-  }
-
-  if (isSaving) {
-    alert('The toolbox cannot be opened while saving a script.');
-    return ;
-  }
-
-  if (isToolboxOpened) {
-    closeToolbox();
-    isToolboxOpened = false;
-    return ;
-  }
-
-  isToolboxOpened = true;
-
-  let toolWorking = false;
-
-  toolbox.classList.add('opened');
-  
-  const tools = [
-    {
-      title: 'Save and reload the page (Ctrl-Enter)',
-      handler: () => { window.close(); chrome.tabs.executeScript(tabId, { code: "window.location.reload();", }); }
-    },
-
-    {
-      title: 'Save and exit (Ctrl-Q)',
-      handler: () => { window.close(); }
-    },
-
-    {
-      title: 'Export this script (' + selectedDomain + ')',
-      handler: () => { download(selectedDomain + '.js', editor.session.getValue()) }
-    },
-
-    {
-      title: 'Export all domain scripts + the prelude',
-      handler: () => {
-        toolWorking = true;
-        chrome.storage.sync.get(null, scripts => {
-          download('injector-scripts.json', JSON.stringify(scripts, null, 4));
-          toolWorking = false;
-        });
-      }
-    },
-
-    {
-      title: 'Close the toolbox',
-      handler: () => closeToolbox()
+    if (!openableToolbox) {
+        alert(
+            "The toolbox cannot be opened while a domain script is loading or failed to load."
+        );
+        return;
     }
-  ];
 
-  for (const tool of tools) {
-    const btn = document.createElement('button');
-    btn.innerText = tool.title;
-    btn.addEventListener('click', () => {
-      if (toolWorking) {
-        alert('Cannot run a tool while another is already running');
-        return ;
-      }
+    if (isSaving) {
+        alert("The toolbox cannot be opened while saving a script.");
+        return;
+    }
 
-      console.debug(`Running tool: ${tool.title}...`);
-      tool.handler();
-    });
-    
-    toolbox.appendChild(btn);
-  }
+    if (isToolboxOpened) {
+        closeToolbox();
+        isToolboxOpened = false;
+        return;
+    }
+
+    isToolboxOpened = true;
+
+    let toolWorking = false;
+
+    toolbox.classList.add("opened");
+
+    const tools = [
+        {
+            title: "Save and reload the page (Ctrl-Enter)",
+            handler: () => {
+                window.close();
+                chrome.tabs.executeScript(tabId, {
+                    code: "window.location.reload();",
+                });
+            },
+        },
+
+        {
+            title: "Save and exit (Ctrl-Q)",
+            handler: () => {
+                window.close();
+            },
+        },
+
+        {
+            title: "Export this script (" + selectedDomain + ")",
+            handler: () => {
+                download(selectedDomain + ".js", editor.session.getValue());
+            },
+        },
+
+        {
+            title: "Export all domain scripts + the prelude",
+            handler: () => {
+                toolWorking = true;
+                chrome.storage.sync.get(null, (scripts) => {
+                    download(
+                        "injector-scripts.json",
+                        JSON.stringify(scripts, null, 4)
+                    );
+                    toolWorking = false;
+                });
+            },
+        },
+
+        {
+            title: "Close the toolbox",
+            handler: () => closeToolbox(),
+        },
+    ];
+
+    for (const tool of tools) {
+        const btn = document.createElement("button");
+        btn.innerText = tool.title;
+        btn.addEventListener("click", () => {
+            if (toolWorking) {
+                alert("Cannot run a tool while another is already running");
+                return;
+            }
+
+            console.debug(`Running tool: ${tool.title}...`);
+            tool.handler();
+        });
+
+        toolbox.appendChild(btn);
+    }
 }
 
 /**
  * Close the toolbox
  */
 function closeToolbox() {
-  toolbox.classList.remove("opened");
-  toolbox.innerHTML = "";
+    toolbox.classList.remove("opened");
+    toolbox.innerHTML = "";
 }
 
 /// ========== Utilities ========== ///
@@ -290,20 +312,20 @@ function closeToolbox() {
  * @returns {string} A promise holding the plain text result
  */
 function startupFetchInternal(uri) {
-  return new Promise(resolve => {
-      fetch(uri)
-          .then((response) =>
-              response
-                  .text()
-                  .then((text) => resolve(text))
-                  .catch(() =>
-                      loadingError(
-                          `Failed to decode text response from internal URI '${uri}'`
-                      )
-                  )
-          )
-          .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`));
-  })
+    return new Promise((resolve) => {
+        fetch(uri)
+            .then((response) =>
+                response
+                    .text()
+                    .then((text) => resolve(text))
+                    .catch(() =>
+                        loadingError(
+                            `Failed to decode text response from internal URI '${uri}'`
+                        )
+                    )
+            )
+            .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`));
+    });
 }
 
 /**
@@ -312,18 +334,18 @@ function startupFetchInternal(uri) {
  * @param {string} content Content as a string
  */
 function download(filename, content) {
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  document.body.appendChild(a);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    document.body.appendChild(a);
 
-  const blob = new Blob([ content ], { type: 'octet/stream' });
-  const url = window.URL.createObjectURL(blob);
+    const blob = new Blob([content], { type: "octet/stream" });
+    const url = window.URL.createObjectURL(blob);
 
-  a.href = url;
-  a.download = filename;
-  a.click();
-  
-  window.URL.revokeObjectURL(url);
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
 }
 
 /// ========== Start ========== ///
@@ -334,116 +356,138 @@ function download(filename, content) {
 function startup() {
     // Parse the domain & load saved data for this domain
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      // Parse the domain
-      const match = tabs[0].url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/);
+        // Parse the domain
+        const match = tabs[0].url.match(
+            /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
+        );
 
-      if (!match) {
-          return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
-      }
+        if (!match) {
+            return loadingError(
+                `Failed to parse domain name for URL: ${tabs[0].url}`
+            );
+        }
 
-      if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
-          return loadingError(`Unsupported protocol "${match[1]}".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(', ')}.`);
-      }
+        if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
+            return loadingError(
+                `Unsupported protocol "${
+                    match[1]
+                }".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(
+                    ", "
+                )}.`
+            );
+        }
 
-      currentDomain = match[2];
+        currentDomain = match[2];
 
-      console.debug('Parsed domain: ' + currentDomain);
+        console.debug("Parsed domain: " + currentDomain);
 
-      tabId = tabs[0].id;
+        tabId = tabs[0].id;
 
-      DEFAULT_PRELUDE = await startupFetchInternal('defaults/prelude.js');
-      DEFAULT_DOMAIN_SCRIPT = await startupFetchInternal('defaults/domain.js');
+        DEFAULT_PRELUDE = await startupFetchInternal("defaults/prelude.js");
+        DEFAULT_DOMAIN_SCRIPT = await startupFetchInternal(
+            "defaults/domain.js"
+        );
 
-      chrome.storage.sync.get(null, scripts => {
-          // Initialize the domain selector
-          const savedDomains = Reflect.ownKeys(scripts);
+        chrome.storage.sync.get(null, (scripts) => {
+            // Initialize the domain selector
+            const savedDomains = Reflect.ownKeys(scripts);
 
-          // Add a choice to the domain selector
-          const addChoice = domain => {
-              const choice = document.createElement('option');
-              choice.setAttribute('value', domain);
-              choice.innerText = domain;
+            // Add a choice to the domain selector
+            const addChoice = (domain) => {
+                const choice = document.createElement("option");
+                choice.setAttribute("value", domain);
+                choice.innerText = domain;
 
-              selector.appendChild(choice);
-          };
+                selector.appendChild(choice);
+            };
 
-          // Prelude script
-          addChoice('<prelude>');
+            // Prelude script
+            addChoice("<prelude>");
 
-          // Current domain
-          addChoice(currentDomain);
+            // Current domain
+            addChoice(currentDomain);
 
-          // All other domains, sorted by name
-          for (const otherDomain of savedDomains.sort()) {
-              if (otherDomain !== currentDomain && otherDomain !== '<prelude>') {
-                  addChoice(otherDomain);
-              }
-          }
+            // All other domains, sorted by name
+            for (const otherDomain of savedDomains.sort()) {
+                if (
+                    otherDomain !== currentDomain &&
+                    otherDomain !== "<prelude>"
+                ) {
+                    addChoice(otherDomain);
+                }
+            }
 
-          // Select current domain
-          selector.selectedIndex = 1;
+            // Select current domain
+            selector.selectedIndex = 1;
 
-          // Listen to domain selection
-          selector.addEventListener('change', () => {
-              load(selector.options[selector.selectedIndex].getAttribute('value'));
-          });
+            // Listen to domain selection
+            selector.addEventListener("change", () => {
+                load(
+                    selector.options[selector.selectedIndex].getAttribute(
+                        "value"
+                    )
+                );
+            });
 
-          editor.session.setMode('ace/mode/javascript');
+            editor.session.setMode("ace/mode/javascript");
 
-          // Detect changes
-          editor.addEventListener('input', () => {
-              // This event may be triggered by API calls such as ".setValue()" and in specific situations.
-              // This is why we use a diffing variable to check if changes have to be made.
+            // Detect changes
+            editor.addEventListener("input", () => {
+                // This event may be triggered by API calls such as ".setValue()" and in specific situations.
+                // This is why we use a diffing variable to check if changes have to be made.
 
-              const content = editor.session.getValue();
-              
-              // If content's length has changed, there are changes of course
-              if (content.length === lastContent.length) {
-                  // If the length is the same, we have to compare the actual content
-                  if (content === lastContent) {
-                      return ;
-                  }
-              }
+                const content = editor.session.getValue();
 
-              lastContent = content;
+                // If content's length has changed, there are changes of course
+                if (content.length === lastContent.length) {
+                    // If the length is the same, we have to compare the actual content
+                    if (content === lastContent) {
+                        return;
+                    }
+                }
 
-              if (updateInterval !== null) {
-                  clearTimeout(updateInterval);
-              }
+                lastContent = content;
 
-              // Save after 500 ms
-              updateInterval = setTimeout(() => onChange(), 500);
+                if (updateInterval !== null) {
+                    clearTimeout(updateInterval);
+                }
 
-              setStatus('✍️', 'Waiting to save changes...');
-          });
+                // Save after 500 ms
+                updateInterval = setTimeout(() => onChange(), 500);
 
-          /// ========== Keyboard shortcuts ========== ///
+                setStatus("✍️", "Waiting to save changes...");
+            });
 
-          editor.commands.addCommand({
-              name: 'saveAndReload',
-              bindKey: {
-                  win: 'Ctrl-Enter',
-                  mac: 'Ctrl-Enter'
-              },
-              // Only exit if the saves were successfully saved
-              exec: () => onChange().then(() => {
-                  window.close();
-                  chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
-              })
-          });
+            /// ========== Keyboard shortcuts ========== ///
 
-          editor.commands.addCommand({
-              name: 'saveAndExit',
-              bindKey: {
-                  win: 'Ctrl-Q',
-                  mac: 'Ctrl-Q'
-              },
-              // Only exit if the saves were successfully saved
-              exec: () => onChange().then(() => window.close())
-          });
+            editor.commands.addCommand({
+                name: "saveAndReload",
+                bindKey: {
+                    win: "Ctrl-Enter",
+                    mac: "Ctrl-Enter",
+                },
+                // Only exit if the saves were successfully saved
+                exec: () =>
+                    onChange().then(() => {
+                        window.close();
+                        chrome.tabs.executeScript(tabId, {
+                            code: "window.location.reload();",
+                        });
+                    }),
+            });
 
-          // Load saved data for this domain
-          load(currentDomain);
+            editor.commands.addCommand({
+                name: "saveAndExit",
+                bindKey: {
+                    win: "Ctrl-Q",
+                    mac: "Ctrl-Q",
+                },
+                // Only exit if the saves were successfully saved
+                exec: () => onChange().then(() => window.close()),
+            });
+
+            // Load saved data for this domain
+            load(currentDomain);
         });
     });
 }
