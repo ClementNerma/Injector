@@ -15,6 +15,7 @@
             height: 20px;
             max-height: 20px;
             width: 100%;
+            z-index: 1;
         }
 
         #editor {
@@ -23,6 +24,48 @@
             left: 0;
             right: 0;
             bottom: 0;
+            z-index: 1;
+        }
+
+        #toolbox {
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            right: 20%;
+            bottom: 20%;
+            /*box-shadow: black 5px 5px;*/
+            background-color: white;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            display: none;
+            z-index: 2;
+        }
+
+        #toolbox.opened {
+            display: block;
+        }
+
+        #toolbox > button {
+            display: block;
+            font-size: 14px;
+            padding: 5px;
+            color: #1fadf0;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #tools {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            font-size: 17px;
+            padding: 5px;
+            background-color: transparent;
+            z-index: 999;
+            cursor: default;
         }
     
         #status {
@@ -43,7 +86,13 @@
 
     <!-- Code editor -->
     <div id="editor"></div>
-    
+
+    <!-- Toolbox -->
+    <div id="toolbox"></div>
+
+    <!-- Tools icon -->
+    <div id="tools"></div>
+
     <!-- Status icon -->
     <div id="status"></div>
 

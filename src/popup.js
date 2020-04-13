@@ -67,16 +67,26 @@ function setStatus(icon, tooltip) {
 
 const selector = document.getElementById('domain-selector');
 const editor = ace.edit('editor');
+const toolbox = document.getElementById('toolbox');
+const toolsBtn = document.getElementById('tools');
 const statusBar = document.getElementById('status');
 
+toolsBtn.addEventListener("click", () => openTools());
+
 /// ========== Loading ========== ///
+
+/** Is the toolbox ready to be opened? */
+let openableToolbox = false;
 
 /**
  * Load script of a given domain
  * @param {string} domain 
  */
 function load(domain) {
+    openableToolbox = false;
+
     setStatus('⌛', 'Loading saved data...');
+    toolsBtn.innerHTML = "⌛";
     editor.setTheme('ace/theme/monokai');
     editor.setShowPrintMargin(false);
     editor.setFontSize('14px');
@@ -112,6 +122,9 @@ function load(domain) {
 
         console.debug('Loaded script for domain: ' + domain);
         setStatus('✔️', 'Loaded saved script');
+
+        toolsBtn.innerHTML = "🛠️";
+        openableToolbox = true;
     });
 }
 
@@ -223,6 +236,117 @@ let isSaving = false;
 
 /** Was there an attempt to save changes while older changes were already being saved? */
 let pendingUpdate = false;
+
+/// ========== Tools ========== ///
+
+/** Is the toolbox opened? */
+let isToolboxOpened = false;
+
+/**
+ * Open the toolbox
+ */
+function openTools() {
+  if (!openableToolbox) {
+    alert('The toolbox cannot be opened while a domain script is loading or failed to load.');
+    return ;
+  }
+
+  if (isSaving) {
+    alert('The toolbox cannot be opened while saving a script.');
+    return ;
+  }
+
+  if (isToolboxOpened) {
+    closeToolbox();
+    isToolboxOpened = false;
+    return ;
+  }
+
+  isToolboxOpened = true;
+
+  let toolWorking = false;
+
+  toolbox.classList.add('opened');
+  
+  const tools = [
+    {
+      title: 'Save and reload the page (Ctrl-Enter)',
+      handler: () => { window.close(); chrome.tabs.executeScript(tabId, { code: "window.location.reload();", }); }
+    },
+
+    {
+      title: 'Save and exit (Ctrl-Q)',
+      handler: () => { window.close(); }
+    },
+
+    {
+      title: 'Export this script (' + selectedDomain + ')',
+      handler: () => { download(selectedDomain + '.js', editor.session.getValue()) }
+    },
+
+    {
+      title: 'Export all domain scripts + the prelude',
+      handler: () => {
+        toolWorking = true;
+        chrome.storage.sync.get(null, scripts => {
+          download('injector-scripts.json', JSON.stringify(scripts, null, 4));
+          toolWorking = false;
+        });
+      }
+    },
+
+    {
+      title: 'Close the toolbox',
+      handler: () => closeToolbox()
+    }
+  ];
+
+  for (const tool of tools) {
+    const btn = document.createElement('button');
+    btn.innerText = tool.title;
+    btn.addEventListener('click', () => {
+      if (toolWorking) {
+        alert('Cannot run a tool while another is already running');
+        return ;
+      }
+
+      console.debug(`Running tool: ${tool.title}...`);
+      tool.handler();
+    });
+    
+    toolbox.appendChild(btn);
+  }
+}
+
+/**
+ * Close the toolbox
+ */
+function closeToolbox() {
+  toolbox.classList.remove("opened");
+  toolbox.innerHTML = "";
+}
+
+/// ========== Utilities ========== ///
+
+/**
+ * Save a text file to the disk
+ * @param {string} filename File's name
+ * @param {string} content Content as a string
+ */
+function download(filename, content) {
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  document.body.appendChild(a);
+
+  const blob = new Blob([ content ], { type: 'octet/stream' });
+  const url = window.URL.createObjectURL(blob);
+
+  a.href = url;
+  a.download = filename;
+  a.click();
+  
+  window.URL.revokeObjectURL(url);
+}
 
 /// ========== Start ========== ///
 
