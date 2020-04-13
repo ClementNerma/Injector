@@ -383,10 +383,13 @@ function startup() {
 
         tabId = tabs[0].id;
 
-        DEFAULT_PRELUDE = await startupFetchInternal("defaults/prelude.js");
-        DEFAULT_DOMAIN_SCRIPT = await startupFetchInternal(
-            "defaults/domain.js"
-        );
+        let [defaultPrelude, defaultDomainScript] = await Promise.all([
+            startupFetchInternal("defaults/prelude.js"),
+            startupFetchInternal("defaults/domain.js"),
+        ]);
+
+        DEFAULT_PRELUDE = defaultPrelude;
+        DEFAULT_DOMAIN_SCRIPT = defaultDomainScript;
 
         chrome.storage.sync.get(null, (scripts) => {
             // Initialize the domain selector
