@@ -3,12 +3,15 @@
 // ========== Constants ========== ///
 
 /** Prefix symbol for compressed scripts */
-const COMPRESSION_PREFIX = "က䀀";
+const COMPRESSION_HEADER = "က䀀";
 
+/** List of protocols the service can operate on */
 const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
 
+/** Default domain script */
 let DEFAULT_DOMAIN_SCRIPT = null;
 
+/** Default prelude */
 let DEFAULT_PRELUDE = null;
 
 // ========== Init ========== ///
@@ -190,7 +193,7 @@ function updateCode(code) {
             );
 
             const compressed =
-                COMPRESSION_PREFIX + LZString.compressToUTF16(code);
+                COMPRESSION_HEADER + LZString.compressToUTF16(code);
 
             // No worry about a potential division by zero here as 'code.length === 0' was already handled before
             const ratio = (
@@ -383,17 +386,24 @@ function startupFetchInternal(uri) {
  * @param {string} content Content as a string
  */
 function download(filename, content) {
+    // A link must be created in order to download the blob we'll create in an instant
     const a = document.createElement("a");
+
+    // Ensure the link is not visible
     a.style.display = "none";
     document.body.appendChild(a);
 
+    // Create a blob containing our content
     const blob = new Blob([content], { type: "octet/stream" });
     const url = window.URL.createObjectURL(blob);
 
     a.href = url;
     a.download = filename;
+
+    // Download it
     a.click();
 
+    // Revoke it to avoid keeping it in memory uselessly
     window.URL.revokeObjectURL(url);
 }
 
@@ -403,7 +413,7 @@ function download(filename, content) {
  * @returns {string} The decompressed content
  */
 function decompress(content) {
-    if (!content.startsWith(COMPRESSION_PREFIX)) {
+    if (!content.startsWith(COMPRESSION_HEADER)) {
         return content;
     }
 
@@ -412,7 +422,7 @@ function decompress(content) {
     );
 
     let decompressed = LZString.decompressFromUTF16(
-        content.substr(COMPRESSION_PREFIX.length)
+        content.substr(COMPRESSION_HEADER.length)
     );
 
     console.debug("Done!");
@@ -455,6 +465,7 @@ function startup() {
 
         tabId = tabs[0].id;
 
+        // Fetch default scripts
         let [defaultPrelude, defaultDomainScript] = await Promise.all([
             startupFetchInternal("../defaults/prelude.js"),
             startupFetchInternal("../defaults/domain.js"),
