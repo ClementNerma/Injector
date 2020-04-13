@@ -12,8 +12,9 @@ function fetchInternal(uri) {
                 response
                     .text()
                     .then((text) => {
+                        const size = (text.length / 1024).toFixed(2);
                         console.debug(
-                            `Successfully loaded internal URI: ${uri}`
+                            `Successfully loaded internal URI '${uri}' (${size} Kb)`
                         );
                         resolve(text);
                     })
@@ -32,8 +33,10 @@ function fetchInternal(uri) {
 }
 
 async function main() {
-    const DEFAULT_PRELUDE = await fetchInternal("src/defaults/prelude.js");
-    const DEFAULT_DOMAIN_SCRIPT = await fetchInternal("src/defaults/domain.js");
+    const [DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT] = await Promise.all([
+        fetchInternal("src/defaults/prelude.js"),
+        fetchInternal("src/defaults/domain.js"),
+    ]);
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (changeInfo.status === "complete") {
