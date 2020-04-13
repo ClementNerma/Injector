@@ -1,5 +1,8 @@
 "use strict";
 
+/** Prefix symbol for compressed scripts */
+const COMPRESSION_PREFIX = "က䀀";
+
 /**
  * Fetch an internal URI at startup
  * @param {string} uri The URI to fetch
@@ -32,10 +35,29 @@ function fetchInternal(uri) {
     });
 }
 
+/**
+ * Decompress a potentially-LZString-compressed content
+ * @param {string} content The content to decompress
+ * @returns {string} The decompressed content
+ */
+function decompress(content) {
+    if (!content.startsWith(COMPRESSION_PREFIX)) {
+        return content;
+    }
+
+    return LZString.decompressFromUTF16(
+        content.substr(COMPRESSION_PREFIX.length)
+    );
+}
+
+/**
+ * Background service's main function
+ * It is asynchronous to enable usage of `await`
+ */
 async function main() {
     const [DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT] = await Promise.all([
-        fetchInternal("src/defaults/prelude.js"),
-        fetchInternal("src/defaults/domain.js"),
+        fetchInternal("defaults/prelude.js"),
+        fetchInternal("defaults/domain.js"),
     ]);
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -81,11 +103,11 @@ async function main() {
                 const code = [
                     `const __tab = ${JSON.stringify(tab)};`,
                     scripts["<prelude>"] !== undefined
-                        ? scripts["<prelude>"]
-                        : DEFAULT_PRELUDE,
+                        ? decompress(scripts["<prelude>"])
+                        : decompress(DEFAULT_PRELUDE),
                     scripts[domain] !== undefined
-                        ? scripts[domain]
-                        : DEFAULT_DOMAIN_SCRIPT,
+                        ? decompress(scripts[domain])
+                        : decompress(DEFAULT_DOMAIN_SCRIPT),
                 ].join("");
 
                 chrome.tabs.executeScript(tabId, { code });

@@ -21,9 +21,7 @@
     },
 
     "background": {
-        "scripts": [
-            "src/background.js"
-        ]
+        "page": "src/background.html"
     },
 
     "permissions": [

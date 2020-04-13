@@ -2,6 +2,9 @@
 
 // ========== Constants ========== ///
 
+/** Prefix symbol for compressed scripts */
+const COMPRESSION_PREFIX = "က䀀";
+
 const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
 
 let DEFAULT_DOMAIN_SCRIPT = null;
@@ -55,6 +58,7 @@ function load(domain) {
     // Load saved data for this domain
     chrome.storage.sync.get(null, (scripts) => {
         const setContent = (code) => {
+            code = decompress(code);
             lastContent = code;
             editor.session.setValue(code);
         };
@@ -166,14 +170,53 @@ function updateCode(code) {
                               '" to storage'
                 );
 
-                setStatus("✔️", "Saved changes");
+                if (!wasCompressed) {
+                    setStatus("✔️", "Saved changes");
+                } else {
+                    setStatus("✔️📦", "Saved changes (compressed)");
+                }
+
                 resolve();
             }
         }
 
+        let wasCompressed = false;
+
         if (code.length === 0) {
             chrome.storage.sync.remove(selectedDomain, callback);
         } else {
+            console.debug(
+                `Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`
+            );
+
+            const compressed =
+                COMPRESSION_PREFIX + LZString.compressToUTF16(code);
+
+            // No worry about a potential division by zero here as 'code.length === 0' was already handled before
+            const ratio = (
+                100 -
+                (compressed.length / code.length) * 100
+            ).toFixed(1);
+
+            console.debug(
+                `Compressed to ${(code.length / 1024).toFixed(
+                    2
+                )} Kb (ratio = ${ratio})`
+            );
+
+            if (ratio > 0) {
+                code = compressed;
+                wasCompressed = true;
+            } else if (ratio === 0) {
+                console.debug(
+                    `Ratio is 0, there is no point to keeping the compressed version.`
+                );
+            } else {
+                console.debug(
+                    `Ratio is negative so the original code will be stored directly instead.`
+                );
+            }
+
             chrome.storage.sync.set({ [selectedDomain]: code }, callback);
         }
     });
@@ -346,6 +389,29 @@ function download(filename, content) {
     a.click();
 
     window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Decompress a potentially-LZString-compressed content
+ * @param {string} content The content to decompress
+ * @returns {string} The decompressed content
+ */
+function decompress(content) {
+    if (!content.startsWith(COMPRESSION_PREFIX)) {
+        return content;
+    }
+
+    console.debug(
+        `Decompressing ${(content.length / 1024).toFixed(2)} Kb of data...`
+    );
+
+    let decompressed = LZString.decompressFromUTF16(
+        content.substr(COMPRESSION_PREFIX.length)
+    );
+
+    console.debug("Done!");
+
+    return decompressed;
 }
 
 /// ========== Start ========== ///
