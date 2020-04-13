@@ -62,10 +62,10 @@ function load(domain) {
         if (scripts[domain] !== undefined) {
             setContent(scripts[domain]);
             editor.gotoLine(Infinity, Infinity);
-        } else if (domain === currentDomain || domain === "<prelude>") {
-            setContent(
-                domain === "<prelude>" ? DEFAULT_PRELUDE : DEFAULT_DOMAIN_SCRIPT
-            );
+        } else if (domain === "<prelude>") {
+            setContent(DEFAULT_PRELUDE);
+        } else if (domain === currentDomain) {
+            setContent(DEFAULT_DOMAIN_SCRIPT);
         } else {
             setContent("");
         }
