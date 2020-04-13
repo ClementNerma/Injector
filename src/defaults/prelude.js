@@ -9,7 +9,10 @@ const q = (selector) => document.querySelector(selector);
 const qa = (selector) => Array.from(document.querySelectorAll(selector));
 
 // Get the style of an element matching a CSS selector
-const styleOf = (selector) => document.querySelector(selector).style;
+const styleOf = (selector) => {
+    const el = document.querySelector(selector);
+    return el ? el.style : null;
+};
 
 // Watch for an element to appear
 const waitFor = (selector, callback, delay = 5000, refresh = 10) => {
