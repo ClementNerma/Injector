@@ -11,3 +11,7 @@
 * Support for exporting all scripts at once
 * Add a toolbox
 * Run the default script on all domains if no script was saved
+
+# Version 1.2 (13-04-2020)
+
+* Scripts are now compressed using [LZString](https://pieroxy.net/blog/pages/lz-string/index.html)
