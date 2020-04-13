@@ -17,11 +17,11 @@
         },
 
         "default_title": "Injector",
-        "default_popup": "src/popup.html"
+        "default_popup": "src/popup/index.html"
     },
 
     "background": {
-        "page": "src/background.html"
+        "page": "src/background/index.html"
     },
 
     "permissions": [

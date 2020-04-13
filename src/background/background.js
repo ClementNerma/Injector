@@ -56,8 +56,8 @@ function decompress(content) {
  */
 async function main() {
     const [DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT] = await Promise.all([
-        fetchInternal("defaults/prelude.js"),
-        fetchInternal("defaults/domain.js"),
+        fetchInternal("../defaults/prelude.js"),
+        fetchInternal("../defaults/domain.js"),
     ]);
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

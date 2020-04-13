@@ -450,8 +450,8 @@ function startup() {
         tabId = tabs[0].id;
 
         let [defaultPrelude, defaultDomainScript] = await Promise.all([
-            startupFetchInternal("defaults/prelude.js"),
-            startupFetchInternal("defaults/domain.js"),
+            startupFetchInternal("../defaults/prelude.js"),
+            startupFetchInternal("../defaults/domain.js"),
         ]);
 
         DEFAULT_PRELUDE = defaultPrelude;
