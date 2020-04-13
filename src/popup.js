@@ -4,6 +4,55 @@
 
 const SUPPORTED_PROTOCOLS = ['http', 'https', 'ftp', 'sftp', 'file'];
 
+const DEFAULT_PRELUDE = [
+  "// A script that is inserted before every other scripts",
+  "// The size limit for all scripts is 8 KB after LZString compression",
+  "// You may access informations about the current tab with the '__tab' constant",
+  "",
+  "// Select an element using a CSS selector",
+  "const q = selector => document.querySelector(selector);",
+  "",
+  "// Select all elements matching a CSS selector",
+  "const qa = selector => Array.from(document.querySelectorAll(selector));",
+  "",
+  "// Get the style of an element matching a CSS selector",
+  "const styleOf = selector => document.querySelector(selector).style;",
+  "",
+  "// Watch for an element to appear",
+  "const waitFor = (selector, callback, delay = 5000, refresh = 10) => {",
+  "  const started = Date.now();",
+  "  const waiter = setInterval(() => {",
+  "    const target = document.querySelector(waitFor);",
+  "",
+  "    if (!target) {",
+  "      if (Date.now() - started >= delay) {",
+  "        clearInterval(waiter);",
+  "      }",
+  "",
+  "      return ;",
+  "    }",
+  "",
+  "    clearInterval(waiter);",
+  "    callback(target, Date.now() - started);",
+  "  }, refresh);",
+  "};",
+  "",
+  "// Inject a new stylesheet in the page",
+  "const injectStyle = css => {",
+  "  const stylesheet = document.createElement('style');",
+  "  stylesheet.innerHTML = css;",
+  "  document.querySelector('head').appendChild(stylesheet);",
+  "};",
+  ""
+].join("\n");
+
+const DEFAULT_DOMAIN_SCRIPT = [
+  "// The <prelude> script is inserted before each script",
+  "// The size limit for all scripts is 8 KB after LZString compression",
+  "// You may access informations about the current tab with the '__tab' constant",
+  ""
+].join("\n");
+
 // ========== Init ========== ///
 
 /**
@@ -51,16 +100,7 @@ function load(domain) {
         }
 
         else if (domain === currentDomain || domain === '<prelude>') {
-            const description = domain === '<prelude>'
-                ? '// A script that is inserted before every other scripts'
-                : '// The <prelude> script is inserted before each script';
-
-            setContent([
-                description,
-                '// The size limit for all scripts is 8 KB',
-                '// You may access informations about the current tab with the "__tab" constant',
-                ''
-            ].join('\n'));
+            setContent(domain === "<prelude>" ? DEFAULT_PRELUDE : DEFAULT_DOMAIN_SCRIPT);
         }
 
         else {
