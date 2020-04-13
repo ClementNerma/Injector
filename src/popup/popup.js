@@ -306,9 +306,15 @@ function openTools() {
             handler: () => {
                 toolWorking = true;
                 chrome.storage.sync.get(null, (scripts) => {
+                    const exportable = {};
+
+                    for (const key of Reflect.ownKeys(scripts)) {
+                        exportable[key] = decompress(scripts[key]);
+                    }
+
                     download(
                         "injector-scripts.json",
-                        JSON.stringify(scripts, null, 4)
+                        JSON.stringify(exportable, null, 4)
                     );
                     toolWorking = false;
                 });
