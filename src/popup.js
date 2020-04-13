@@ -4,54 +4,9 @@
 
 const SUPPORTED_PROTOCOLS = ['http', 'https', 'ftp', 'sftp', 'file'];
 
-const DEFAULT_PRELUDE = [
-  "// A script that is inserted before every other scripts",
-  "// The size limit for all scripts is 8 KB after LZString compression",
-  "// You may access informations about the current tab with the '__tab' constant",
-  "",
-  "// Select an element using a CSS selector",
-  "const q = selector => document.querySelector(selector);",
-  "",
-  "// Select all elements matching a CSS selector",
-  "const qa = selector => Array.from(document.querySelectorAll(selector));",
-  "",
-  "// Get the style of an element matching a CSS selector",
-  "const styleOf = selector => document.querySelector(selector).style;",
-  "",
-  "// Watch for an element to appear",
-  "const waitFor = (selector, callback, delay = 5000, refresh = 10) => {",
-  "  const started = Date.now();",
-  "  const waiter = setInterval(() => {",
-  "    const target = document.querySelector(waitFor);",
-  "",
-  "    if (!target) {",
-  "      if (Date.now() - started >= delay) {",
-  "        clearInterval(waiter);",
-  "      }",
-  "",
-  "      return ;",
-  "    }",
-  "",
-  "    clearInterval(waiter);",
-  "    callback(target, Date.now() - started);",
-  "  }, refresh);",
-  "};",
-  "",
-  "// Inject a new stylesheet in the page",
-  "const injectStyle = css => {",
-  "  const stylesheet = document.createElement('style');",
-  "  stylesheet.innerHTML = css;",
-  "  document.querySelector('head').appendChild(stylesheet);",
-  "};",
-  ""
-].join("\n");
+let DEFAULT_DOMAIN_SCRIPT = null;
 
-const DEFAULT_DOMAIN_SCRIPT = [
-  "// The <prelude> script is inserted before each script",
-  "// The size limit for all scripts is 8 KB after LZString compression",
-  "// You may access informations about the current tab with the '__tab' constant",
-  ""
-].join("\n");
+let DEFAULT_PRELUDE = null;
 
 // ========== Init ========== ///
 
@@ -329,6 +284,29 @@ function closeToolbox() {
 /// ========== Utilities ========== ///
 
 /**
+ * Fetch an internal URI at startup
+ * Fails on error
+ * @param {string} uri The URI to fetch
+ * @returns {string} A promise holding the plain text result
+ */
+function startupFetchInternal(uri) {
+  return new Promise(resolve => {
+      fetch(uri)
+          .then((response) =>
+              response
+                  .text()
+                  .then((text) => resolve(text))
+                  .catch(() =>
+                      loadingError(
+                          `Failed to decode text response from internal URI '${uri}'`
+                      )
+                  )
+          )
+          .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`));
+  })
+}
+
+/**
  * Save a text file to the disk
  * @param {string} filename File's name
  * @param {string} content Content as a string
@@ -352,121 +330,122 @@ function download(filename, content) {
 
 /**
  * Initialize the program
- * Called automatically after retrieving the current domain name and tab identifier
  */
 function startup() {
-    editor.session.setMode('ace/mode/javascript');
+    // Parse the domain & load saved data for this domain
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      // Parse the domain
+      const match = tabs[0].url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/);
 
-    // Detect changes
-    editor.addEventListener('input', () => {
-        // This event may be triggered by API calls such as ".setValue()" and in specific situations.
-        // This is why we use a diffing variable to check if changes have to be made.
+      if (!match) {
+          return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
+      }
 
-        const content = editor.session.getValue();
-        
-        // If content's length has changed, there are changes of course
-        if (content.length === lastContent.length) {
-            // If the length is the same, we have to compare the actual content
-            if (content === lastContent) {
-                return ;
-            }
-        }
+      if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
+          return loadingError(`Unsupported protocol "${match[1]}".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(', ')}.`);
+      }
 
-        lastContent = content;
+      currentDomain = match[2];
 
-        if (updateInterval !== null) {
-            clearTimeout(updateInterval);
-        }
+      console.debug('Parsed domain: ' + currentDomain);
 
-        // Save after 500 ms
-        updateInterval = setTimeout(() => onChange(), 500);
+      tabId = tabs[0].id;
 
-        setStatus('✍️', 'Waiting to save changes...');
-    });
+      DEFAULT_PRELUDE = await startupFetchInternal('defaults/prelude.js');
+      DEFAULT_DOMAIN_SCRIPT = await startupFetchInternal('defaults/domain.js');
 
-    /// ========== Keyboard shortcuts ========== ///
+      chrome.storage.sync.get(null, scripts => {
+          // Initialize the domain selector
+          const savedDomains = Reflect.ownKeys(scripts);
 
-    editor.commands.addCommand({
-        name: 'saveAndReload',
-        bindKey: {
-            win: 'Ctrl-Enter',
-            mac: 'Ctrl-Enter'
-        },
-        // Only exit if the saves were successfully saved
-        exec: () => onChange().then(() => {
-            window.close();
-            chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
-        })
-    });
+          // Add a choice to the domain selector
+          const addChoice = domain => {
+              const choice = document.createElement('option');
+              choice.setAttribute('value', domain);
+              choice.innerText = domain;
 
-    editor.commands.addCommand({
-        name: 'saveAndExit',
-        bindKey: {
-            win: 'Ctrl-Q',
-            mac: 'Ctrl-Q'
-        },
-        // Only exit if the saves were successfully saved
-        exec: () => onChange().then(() => window.close())
+              selector.appendChild(choice);
+          };
+
+          // Prelude script
+          addChoice('<prelude>');
+
+          // Current domain
+          addChoice(currentDomain);
+
+          // All other domains, sorted by name
+          for (const otherDomain of savedDomains.sort()) {
+              if (otherDomain !== currentDomain && otherDomain !== '<prelude>') {
+                  addChoice(otherDomain);
+              }
+          }
+
+          // Select current domain
+          selector.selectedIndex = 1;
+
+          // Listen to domain selection
+          selector.addEventListener('change', () => {
+              load(selector.options[selector.selectedIndex].getAttribute('value'));
+          });
+
+          editor.session.setMode('ace/mode/javascript');
+
+          // Detect changes
+          editor.addEventListener('input', () => {
+              // This event may be triggered by API calls such as ".setValue()" and in specific situations.
+              // This is why we use a diffing variable to check if changes have to be made.
+
+              const content = editor.session.getValue();
+              
+              // If content's length has changed, there are changes of course
+              if (content.length === lastContent.length) {
+                  // If the length is the same, we have to compare the actual content
+                  if (content === lastContent) {
+                      return ;
+                  }
+              }
+
+              lastContent = content;
+
+              if (updateInterval !== null) {
+                  clearTimeout(updateInterval);
+              }
+
+              // Save after 500 ms
+              updateInterval = setTimeout(() => onChange(), 500);
+
+              setStatus('✍️', 'Waiting to save changes...');
+          });
+
+          /// ========== Keyboard shortcuts ========== ///
+
+          editor.commands.addCommand({
+              name: 'saveAndReload',
+              bindKey: {
+                  win: 'Ctrl-Enter',
+                  mac: 'Ctrl-Enter'
+              },
+              // Only exit if the saves were successfully saved
+              exec: () => onChange().then(() => {
+                  window.close();
+                  chrome.tabs.executeScript(tabId, { code: 'window.location.reload();' });
+              })
+          });
+
+          editor.commands.addCommand({
+              name: 'saveAndExit',
+              bindKey: {
+                  win: 'Ctrl-Q',
+                  mac: 'Ctrl-Q'
+              },
+              // Only exit if the saves were successfully saved
+              exec: () => onChange().then(() => window.close())
+          });
+
+          // Load saved data for this domain
+          load(currentDomain);
+        });
     });
 }
 
-// Parse the domain & load saved data for this domain
-chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-    // Parse the domain
-    const match = tabs[0].url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/);
-
-    if (!match) {
-        return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`);
-    }
-
-    if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
-        return loadingError(`Unsupported protocol "${match[1]}".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(', ')}.`);
-    }
-
-    currentDomain = match[2];
-
-    console.debug('Parsed domain: ' + currentDomain);
-
-    tabId = tabs[0].id;
-
-    chrome.storage.sync.get(null, scripts => {
-        // Initialize the domain selector
-        const savedDomains = Reflect.ownKeys(scripts);
-
-        // Add a choice to the domain selector
-        const addChoice = domain => {
-            const choice = document.createElement('option');
-            choice.setAttribute('value', domain);
-            choice.innerText = domain;
-
-            selector.appendChild(choice);
-        };
-
-        // Prelude script
-        addChoice('<prelude>');
-
-        // Current domain
-        addChoice(currentDomain);
-
-        // All other domains, sorted by name
-        for (const otherDomain of savedDomains.sort()) {
-            if (otherDomain !== currentDomain && otherDomain !== '<prelude>') {
-                addChoice(otherDomain);
-            }
-        }
-
-        // Select current domain
-        selector.selectedIndex = 1;
-
-        // Listen to domain selection
-        selector.addEventListener('change', () => {
-            load(selector.options[selector.selectedIndex].getAttribute('value'));
-        });
-
-        // Start everything up
-        startup();
-
-        // Load saved data for this domain
-        load(currentDomain);
-    });
-});
+startup();
