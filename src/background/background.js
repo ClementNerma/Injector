@@ -62,59 +62,76 @@ Promise.all([
 ]).then(([DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT]) => {
     // Run a handler when the active tab changes
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        // Only handle tabs that just finished to load
-        if (changeInfo.status === "complete") {
-            if (!tab.url) {
-                console.debug(
-                    "Encountered tab without URL (probably a browser internal page)"
-                );
-                return;
-            }
-
-            const _domain = tab.url.match(
-                /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
+        if (!tab.url) {
+            console.debug(
+                "Encountered tab without URL (probably a browser internal page)"
             );
+            return;
+        }
 
-            if (!_domain) {
+        const _domain = tab.url.match(
+            /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
+        );
+
+        if (!_domain) {
+            console.debug(
+                `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
+            );
+            return;
+        }
+
+        if (!SUPPORTED_PROTOCOLS.includes(_domain[1])) {
+            console.debug(
+                `Ignoring script injection for unsupported protocol "${_domain[1]}"`
+            );
+            return;
+        }
+
+        const domain = _domain[2];
+
+        // Retrieve scripts from the storage
+        chrome.storage.sync.get(null, (scripts) => {
+            let domainScript;
+
+            if (scripts[domain] === undefined) {
                 console.debug(
-                    `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
+                    `No saved script was found for domain: ${domain}`
                 );
-                return;
+
+                domainScript = decompress(DEFAULT_DOMAIN_SCRIPT);
+            } else {
+                console.debug(`Loaded saved script for domain: ${domain}`);
+
+                domainScript = decompress(scripts[domain]);
             }
 
-            if (!SUPPORTED_PROTOCOLS.includes(_domain[1])) {
-                console.debug(
-                    `Ignoring script injection for unsupported protocol "${_domain[1]}"`
-                );
-                return;
-            }
+            // Determine if the script is immediate or not
+            const immediate = domainScript
+                .trim()
+                .match(/^\/\/\s*#immediate([\r\n]|$)/);
 
-            const domain = _domain[2];
-
-            // Retrieve scripts from the storage
-            chrome.storage.sync.get(null, (scripts) => {
-                if (scripts[domain] === undefined) {
-                    console.debug(
-                        `No saved script was found for domain: ${domain}`
-                    );
-                } else {
-                    console.debug(`Loaded saved script for domain: ${domain}`);
-                }
-
+            if (immediate || tab.status === "complete") {
                 // Prepare the code to inject in the current tab
                 const code = [
-                    `const __tab = ${JSON.stringify(tab)};`,
-                    scripts["<prelude>"] !== undefined
-                        ? decompress(scripts["<prelude>"])
-                        : decompress(DEFAULT_PRELUDE),
-                    scripts[domain] !== undefined
-                        ? decompress(scripts[domain])
-                        : decompress(DEFAULT_DOMAIN_SCRIPT),
+                    `;(function injector_domain_script(__tab) {`,
+                    `  if ("$injectorScriptRun" in window) return ;`,
+                    `  window.$injectorScriptRun = true;`,
+                    `  console.debug("[Injector] Running script for domain: " + __tab.url);`,
+                    decompress(
+                        scripts["<prelude>"] === undefined
+                            ? DEFAULT_PRELUDE
+                            : scripts["<prelude>"]
+                    ),
+                    domainScript,
+                    `;})(${JSON.stringify(tab)});`,
                 ].join("");
 
                 // Inject it
-                chrome.tabs.executeScript(tabId, { code });
-            });
-        }
+                chrome.tabs.executeScript(tabId, {
+                    code,
+                    runAt: immediate ? "document_start" : "document_idle",
+                });
+            }
+        });
     });
 });

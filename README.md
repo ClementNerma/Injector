@@ -18,6 +18,16 @@ Before each domain's script, a _prelude_ script is inserted. It contains nothing
 
 Also, all scripts (including the prelude) have access to the `__tab` object, which contains informations on the active tab. It's a [`chrome.tabs.Tab`](https://developer.chrome.com/extensions/tabs#type-Tab).
 
+## Immediate scripts
+
+By default, scripts are run when a tab finishes to load. In order to make the script as soon as the tab starts to load (for instance in order to inject styles in the page), the following comment must be written at the very beginning of the script:
+
+```js
+//#immediate
+```
+
+Note that this comment does not have any effect on the prelude script.
+
 ## Synchronization
 
 Your scripts are synchronized between all computers through your Google account thanks to the [`chrome.storage.sync`](https://developer.chrome.com/extensions/storage) API.

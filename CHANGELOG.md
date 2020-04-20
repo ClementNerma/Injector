@@ -15,3 +15,7 @@
 # Version 1.2 (13-04-2020)
 
 * Scripts are now compressed using [LZString](https://pieroxy.net/blog/pages/lz-string/index.html)
+
+# Version 1.3 (20-04-2020)
+
+* Introduce [immediate scripts](README.md#immediate-scripts)
