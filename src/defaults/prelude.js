@@ -39,3 +39,20 @@ const injectStyle = (css) => {
     stylesheet.innerHTML = css;
     document.querySelector("head").appendChild(stylesheet);
 };
+
+// Run a command when the document is fully loaded
+// Useful for immediate scripts that also want to run another function
+//  only after the DOM is ready
+const onLoad = (callback) => {
+    if (domReady) {
+        callback();
+    } else {
+        window.addEventListener("load", () => callback());
+    }
+};
+
+// Track if DOM is ready
+let domReady = false;
+window.addEventListener("load", () => {
+    domReady = true;
+});
