@@ -72,8 +72,8 @@ function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
         // Prepare the code to inject in the current tab
         const code = [
             `;(function injector_domain_script(__tab) {`,
-            `  if ("$injector${varName}Run" in window) return ;`,
-            `  window.$injector${varName}Run = true;`,
+            `  if ("$injector_${varName}_run" in window) return ;`,
+            `  window.$injector_${varName}_run = true;`,
             `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
             plainPrelude,
             script,
@@ -136,7 +136,7 @@ Promise.all([
                 tab,
                 prelude,
                 decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
-                "Generic",
+                "generic",
                 "generic"
             );
 
@@ -161,7 +161,7 @@ Promise.all([
                 tab,
                 prelude,
                 decompress(domainScript),
-                "DomainScript",
+                "domainScript",
                 "domain script"
             );
         });
