@@ -19,3 +19,7 @@
 # Version 1.3 (20-04-2020)
 
 * Introduce [immediate scripts](README.md#immediate-scripts)
+
+# Version 1.4 (26-04-2020)
+
+* Introduce [the generic](README.md#the-generic)

@@ -55,11 +55,47 @@ function decompress(content) {
     );
 }
 
+/**
+ * Inject a script at the right timing
+ * @param {number} tabId ID of the tab to inject the script in
+ * @param {object} tab Chrome Tab object
+ * @param {script} plainPrelude The decompressed prelude
+ * @param {script} script The compressed script
+ * @param {string} varName The script's variable-compliant name (e.g. "domainScript")
+ * @param {script} scriptName The script's name (e.g. "domain script")
+ */
+function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
+    // Determine if the script is immediate
+    const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/);
+
+    if (isImmediate || tab.status === "complete") {
+        // Prepare the code to inject in the current tab
+        const code = [
+            `;(function injector_domain_script(__tab) {`,
+            `  if ("$injector${varName}Run" in window) return ;`,
+            `  window.$injector${varName}Run = true;`,
+            `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
+            plainPrelude,
+            script,
+            `;})(${JSON.stringify(tab)});`,
+        ].join("");
+
+        // Inject it
+        chrome.tabs.executeScript(tabId, {
+            code,
+            runAt: isImmediate ? "document_start" : "document_idle",
+        });
+
+        console.debug(`Injected ${scriptName} in a tab`);
+    }
+}
+
 // Load required resources first
 Promise.all([
     fetchInternal("../defaults/prelude.js"),
+    fetchInternal("../defaults/generic.js"),
     fetchInternal("../defaults/domain.js"),
-]).then(([DEFAULT_PRELUDE, DEFAULT_DOMAIN_SCRIPT]) => {
+]).then(([DEFAULT_PRELUDE, DEFAULT_GENERIC, DEFAULT_DOMAIN_SCRIPT]) => {
     // Run a handler when the active tab changes
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (!tab.url) {
@@ -91,6 +127,20 @@ Promise.all([
 
         // Retrieve scripts from the storage
         chrome.storage.sync.get(null, (scripts) => {
+            // Decompress the prelude
+            const prelude = decompress(scripts["<prelude>"] ?? DEFAULT_PRELUDE);
+
+            // Inject the generic
+            inject(
+                tabId,
+                tab,
+                prelude,
+                decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
+                "Generic",
+                "generic"
+            );
+
+            // Get the domain script
             let domainScript;
 
             if (scripts[domain] === undefined) {
@@ -105,33 +155,15 @@ Promise.all([
                 domainScript = decompress(scripts[domain]);
             }
 
-            // Determine if the script is immediate or not
-            const immediate = domainScript
-                .trim()
-                .match(/^\/\/\s*#immediate([\r\n]|$)/);
-
-            if (immediate || tab.status === "complete") {
-                // Prepare the code to inject in the current tab
-                const code = [
-                    `;(function injector_domain_script(__tab) {`,
-                    `  if ("$injectorScriptRun" in window) return ;`,
-                    `  window.$injectorScriptRun = true;`,
-                    `  console.debug("[Injector] Running script for domain: " + __tab.url);`,
-                    decompress(
-                        scripts["<prelude>"] === undefined
-                            ? DEFAULT_PRELUDE
-                            : scripts["<prelude>"]
-                    ),
-                    domainScript,
-                    `;})(${JSON.stringify(tab)});`,
-                ].join("");
-
-                // Inject it
-                chrome.tabs.executeScript(tabId, {
-                    code,
-                    runAt: immediate ? "document_start" : "document_idle",
-                });
-            }
+            // Inject it as well
+            inject(
+                tabId,
+                tab,
+                prelude,
+                decompress(domainScript),
+                "DomainScript",
+                "domain script"
+            );
         });
     });
 });

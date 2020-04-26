@@ -18,6 +18,14 @@ Before each domain's script, a _prelude_ script is inserted. It contains nothing
 
 Also, all scripts (including the prelude) have access to the `__tab` object, which contains informations on the active tab. It's a [`chrome.tabs.Tab`](https://developer.chrome.com/extensions/tabs#type-Tab).
 
+## The generic
+
+A _generic_ script is executed on every domain. It can be accessed through the `<generic>` option in the popup's dropdown.
+
+Note that the prelude is inserted before the generic as well.
+
+The generic is injected in the page before the domain script if both have the same immediatety (you can use `// #immediate` on the generic).
+
 ## Immediate scripts
 
 By default, scripts are run when a tab finishes to load. In order to make the script as soon as the tab starts to load (for instance in order to inject styles in the page), the following comment must be written at the very beginning of the script:

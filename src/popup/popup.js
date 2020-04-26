@@ -8,11 +8,14 @@ const COMPRESSION_HEADER = "က䀀";
 /** List of protocols the service can operate on */
 const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
 
-/** Default domain script */
-let DEFAULT_DOMAIN_SCRIPT = null;
-
 /** Default prelude */
 let DEFAULT_PRELUDE = null;
+
+/** Default generic */
+let DEFAULT_GENERIC = null;
+
+/** Default domain script */
+let DEFAULT_DOMAIN_SCRIPT = null;
 
 // ========== Init ========== ///
 
@@ -71,6 +74,8 @@ function load(domain) {
             editor.gotoLine(Infinity, Infinity);
         } else if (domain === "<prelude>") {
             setContent(DEFAULT_PRELUDE);
+        } else if (domain === "<generic>") {
+            setContent(DEFAULT_GENERIC);
         } else if (domain === currentDomain) {
             setContent(DEFAULT_DOMAIN_SCRIPT);
         } else {
@@ -305,7 +310,7 @@ function openTools() {
         },
 
         {
-            title: "Export all domain scripts + the prelude",
+            title: "Export all scripts",
             handler: () => {
                 toolWorking = true;
                 chrome.storage.sync.get(null, (scripts) => {
@@ -466,12 +471,18 @@ function startup() {
         tabId = tabs[0].id;
 
         // Fetch default scripts
-        let [defaultPrelude, defaultDomainScript] = await Promise.all([
+        let [
+            defaultPrelude,
+            defaultGeneric,
+            defaultDomainScript,
+        ] = await Promise.all([
             startupFetchInternal("../defaults/prelude.js"),
+            startupFetchInternal("../defaults/generic.js"),
             startupFetchInternal("../defaults/domain.js"),
         ]);
 
         DEFAULT_PRELUDE = defaultPrelude;
+        DEFAULT_GENERIC = defaultGeneric;
         DEFAULT_DOMAIN_SCRIPT = defaultDomainScript;
 
         chrome.storage.sync.get(null, (scripts) => {
@@ -490,6 +501,9 @@ function startup() {
             // Prelude script
             addChoice("<prelude>");
 
+            // Generic
+            addChoice("<generic>");
+
             // Current domain
             addChoice(currentDomain);
 
@@ -497,14 +511,15 @@ function startup() {
             for (const otherDomain of savedDomains.sort()) {
                 if (
                     otherDomain !== currentDomain &&
-                    otherDomain !== "<prelude>"
+                    otherDomain !== "<prelude>" &&
+                    otherDomain !== "<generic>"
                 ) {
                     addChoice(otherDomain);
                 }
             }
 
             // Select current domain
-            selector.selectedIndex = 1;
+            selector.selectedIndex = 2;
 
             // Listen to domain selection
             selector.addEventListener("change", () => {
