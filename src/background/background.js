@@ -77,7 +77,7 @@ function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
             `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
             plainPrelude,
             script,
-            `;})(${JSON.stringify(tab)});`,
+            `\n;})(${JSON.stringify(tab)});`,
         ].join("");
 
         // Inject it
