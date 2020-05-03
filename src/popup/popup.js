@@ -187,6 +187,10 @@ function updateCode(code) {
 
         if (code.length === 0) {
             chrome.storage.sync.remove(selectedDomain, callback);
+            successStatus = [
+                "✔️",
+                `Saved changes (removed script from lists as it is empty)`,
+            ];
         } else {
             console.debug(
                 `Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`
