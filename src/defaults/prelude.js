@@ -40,6 +40,36 @@ const injectStyle = (css) => {
     document.querySelector("head").appendChild(stylesheet);
 };
 
+// Hide an element
+const hide = (selector) => injectStyle(`${selector} { display: none; }`);
+
+// Remove an element
+const remove = (selector) => q(selector)?.remove();
+
+// Remove all elements matching a selector
+const removeAll = (selector) => qa(selector).forEach((el) => el.remove());
+
+// Remove an element when it appears
+const removeReady = (selector) => waitFor(selector, (el) => el.remove());
+
+// Hide an element and remove it when it appears
+const hideAndRemove = (selector) => {
+    hide(selector);
+    removeReady(selector);
+};
+
+// Hide and remove all elements matching a selector when they are appear (the first time only)
+const hideAndRemoveAll = (selector) => {
+    hide(selector);
+    waitFor(selector, (_) => removeAll(selector));
+};
+
+// Hide and remove all elements matching a selector when they are appear
+const hideAndRemoveAllContinuously = (selector, refresh = 20) => {
+    hide(selector);
+    setInterval(() => removeAll(selector), refresh);
+};
+
 // Run a command when the document is fully loaded
 // Useful for immediate scripts that also want to run another function
 //  only after the DOM is ready
