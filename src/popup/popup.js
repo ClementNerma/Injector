@@ -189,7 +189,19 @@ function updateCode(code) {
             chrome.storage.sync.remove(selectedDomain, callback);
             successStatus = [
                 "✔️",
-                `Saved changes (removed script from lists as it is empty)`,
+                `Saved changes (removed script from storage since it is empty)`,
+            ];
+        } else if (
+            (selectedDomain === "<prelude>" && code === DEFAULT_PRELUDE) ||
+            (selectedDomain === "<generic>" && code === DEFAULT_GENERIC) ||
+            (selectedDomain !== "<prelude>" &&
+                selectedDomain !== "<generic>" &&
+                code === DEFAULT_DOMAIN_SCRIPT)
+        ) {
+            chrome.storage.sync.remove(selectedDomain, callback);
+            successStatus = [
+                "✔️",
+                `Saved changes (removed script from storage since it is equivalent to the default script)`,
             ];
         } else {
             console.debug(
