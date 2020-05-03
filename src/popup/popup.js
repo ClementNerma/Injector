@@ -178,17 +178,12 @@ function updateCode(code) {
                               '" to storage'
                 );
 
-                if (!wasCompressed) {
-                    setStatus("✔️", "Saved changes");
-                } else {
-                    setStatus("✔️📦", "Saved changes (compressed)");
-                }
-
+                setStatus(successStatus[0], successStatus[1]);
                 resolve();
             }
         }
 
-        let wasCompressed = false;
+        let successStatus = null;
 
         if (code.length === 0) {
             chrome.storage.sync.remove(selectedDomain, callback);
@@ -213,15 +208,23 @@ function updateCode(code) {
             );
 
             if (ratio > 0) {
+                successStatus = [
+                    "✔️📦",
+                    `Saved changes (${sizeInKB(code.length)} plain, ${sizeInKB(
+                        compressed.length
+                    )} compressed, ratio = ${ratio}`,
+                ];
                 code = compressed;
-                wasCompressed = true;
-            } else if (ratio === 0) {
-                console.debug(
-                    `Ratio is 0, there is no point to keeping the compressed version.`
-                );
             } else {
+                successStatus = [
+                    "✔️",
+                    `Saved changes (${sizeInKB(code.length)})`,
+                ];
+
                 console.debug(
-                    `Ratio is negative so the original code will be stored directly instead.`
+                    ratio === 0
+                        ? `Ratio is 0, there is no point to keeping the compressed version.`
+                        : `Ratio is negative so the original code will be stored directly instead.`
                 );
             }
 
@@ -433,6 +436,16 @@ function decompress(content) {
     console.debug("Done!");
 
     return decompressed;
+}
+
+/**
+ * Display a human-readable size, in kilobytes
+ * @param {number} size A size in bytes
+ * @returns {string} The readable size
+ * @example sizeInKB(1047) === "1.02"
+ */
+function sizeInKB(size) {
+    return (size / 1024).toFixed(2) + " Kb";
 }
 
 /// ========== Start ========== ///
