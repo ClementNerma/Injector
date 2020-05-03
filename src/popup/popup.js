@@ -196,10 +196,7 @@ function updateCode(code) {
                 COMPRESSION_HEADER + LZString.compressToUTF16(code);
 
             // No worry about a potential division by zero here as 'code.length === 0' was already handled before
-            const ratio = (
-                100 -
-                (compressed.length / code.length) * 100
-            ).toFixed(1);
+            const ratio = (code.length / compressed.length).toFixed(1);
 
             console.debug(
                 `Compressed to ${(code.length / 1024).toFixed(
