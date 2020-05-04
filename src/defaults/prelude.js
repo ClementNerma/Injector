@@ -37,7 +37,7 @@ const waitFor = (selector, callback, delay = 5000, refresh = 10) => {
 const injectStyle = (css) => {
     const stylesheet = document.createElement("style");
     stylesheet.innerHTML = css;
-    document.querySelector("head").appendChild(stylesheet);
+    waitFor("head", (head) => head.appendChild(stylesheet));
 };
 
 // Hide an element
