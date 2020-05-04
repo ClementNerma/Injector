@@ -16,9 +16,16 @@ const styleOf = (selector) => {
 
 // Watch for an element to appear
 const waitFor = (selector, callback, delay = 10000, refresh = 10) => {
+    const init = q(selector);
+
+    if (init) {
+        callback(init, 0);
+        return;
+    }
+
     const started = Date.now();
     const waiter = setInterval(() => {
-        const target = document.querySelector(selector);
+        const target = q(selector);
 
         if (!target) {
             if (Date.now() - started >= delay) {
