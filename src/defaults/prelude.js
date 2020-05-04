@@ -15,7 +15,7 @@ const styleOf = (selector) => {
 };
 
 // Watch for an element to appear
-const waitFor = (selector, callback, delay = 5000, refresh = 10) => {
+const waitFor = (selector, callback, delay = 10000, refresh = 10) => {
     const started = Date.now();
     const waiter = setInterval(() => {
         const target = document.querySelector(selector);
