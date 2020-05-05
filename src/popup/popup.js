@@ -332,7 +332,6 @@ function openTools() {
                 const promise = uploadText();
 
                 promise.then((text) => {
-                    console.log("success", { text });
                     editor.setValue(text);
                     onChange();
 
@@ -341,7 +340,6 @@ function openTools() {
                 });
 
                 promise.catch((err) => {
-                    console.error("fail", { err });
                     const errMsg =
                         err[0] === "upload"
                             ? "Failed to read input file"
