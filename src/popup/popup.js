@@ -464,6 +464,9 @@ function download(filename, content) {
 
     // Revoke it to avoid keeping it in memory uselessly
     window.URL.revokeObjectURL(url);
+
+    // Remove the link
+    a.remove();
 }
 
 /**
@@ -479,10 +482,13 @@ function upload() {
         uploadBtn.addEventListener(
             "change",
             () => {
-                if (!uploadBtn.files[0]) {
+                const file = uploadBtn.files[0];
+
+                if (!file) {
                     reject();
                 } else {
-                    resolve(uploadBtn.files[0]);
+                    uploadBtn.remove();
+                    resolve(file);
                 }
             },
             false
