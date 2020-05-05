@@ -163,8 +163,14 @@ function updateCode(code) {
         function callback() {
             if (chrome.runtime.lastError) {
                 const errMsg =
-                    "Failed to save changes: " + chrome.runtime.lastError;
-                console.error(errMsg);
+                    "Failed to save changes: " +
+                    chrome.runtime.lastError.message;
+
+                console.error(
+                    "Failed to save changes",
+                    chrome.runtime.lastError
+                );
+
                 setStatus("❌", errMsg);
                 reject();
             } else {
@@ -346,6 +352,38 @@ function openTools() {
         },
 
         {
+            title: "Import a script for this domain",
+            handler: () => {
+                toolWorking = true;
+
+                const promise = uploadText();
+
+                promise.then((text) => {
+                    console.log("success", { text });
+                    editor.setValue(text);
+                    onChange();
+
+                    toolWorking = false;
+                    closeToolbox();
+                });
+
+                promise.catch((err) => {
+                    console.error("fail", { err });
+                    const errMsg =
+                        err[0] === "upload"
+                            ? "Failed to read input file"
+                            : err[1] === "read"
+                            ? `Failed to read the text file`
+                            : "Unknown error";
+                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`);
+                    console.error(errMsg, err);
+
+                    toolWorking = false;
+                });
+            },
+        },
+
+        {
             title: "Close the toolbox",
             handler: () => closeToolbox(),
         },
@@ -426,6 +464,71 @@ function download(filename, content) {
 
     // Revoke it to avoid keeping it in memory uselessly
     window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Load a file from the disk
+ * @returns {Promise} A promise resolving with a File object or failing with no value
+ */
+function upload() {
+    return new Promise((resolve, reject) => {
+        const uploadBtn = document.createElement("input");
+        uploadBtn.setAttribute("type", "file");
+        uploadBtn.style.display = "none";
+
+        uploadBtn.addEventListener(
+            "change",
+            () => {
+                if (!uploadBtn.files[0]) {
+                    reject();
+                } else {
+                    resolve(uploadBtn.files[0]);
+                }
+            },
+            false
+        );
+
+        document.body.appendChild(uploadBtn);
+        uploadBtn.click();
+    });
+}
+
+/**
+ * Get the plain text content of a File object
+ * @param {File} file The File object to read from
+ * @returns {Promise} A promise resolving with the file's plain text content or failing with the error object
+ */
+function readUploadedFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+            if (reader.result.length > 1024 * 1024) {
+                reject(new Error("file exceeds 1 MB"));
+            } else {
+                resolve(reader.result);
+            }
+        });
+        reader.addEventListener("error", (err) => reject(err));
+        reader.readAsText(file);
+    });
+}
+
+/**
+ * Load a text file from the disk
+ * @returns {Promise} A promise resolving with the file's content or failing with [ "upload" | "read", <error object> ]
+ */
+function uploadText() {
+    return new Promise((resolve, reject) => {
+        const promise = upload();
+
+        promise.then((file) =>
+            readUploadedFile(file)
+                .then((text) => resolve(text))
+                .catch((err) => reject(["read", err]))
+        );
+
+        promise.catch((err) => reject(["upload", err]));
+    });
 }
 
 /**
