@@ -325,33 +325,6 @@ function openTools() {
         },
 
         {
-            title: "Export this script (" + selectedDomain + ")",
-            handler: () => {
-                download(selectedDomain + ".js", editor.session.getValue());
-            },
-        },
-
-        {
-            title: "Export all scripts",
-            handler: () => {
-                toolWorking = true;
-                chrome.storage.sync.get(null, (scripts) => {
-                    const exportable = {};
-
-                    for (const key of Reflect.ownKeys(scripts)) {
-                        exportable[key] = decompress(scripts[key]);
-                    }
-
-                    download(
-                        "injector-scripts.json",
-                        JSON.stringify(exportable, null, 4)
-                    );
-                    toolWorking = false;
-                });
-            },
-        },
-
-        {
             title: "Import a script for this domain",
             handler: () => {
                 toolWorking = true;
@@ -378,6 +351,33 @@ function openTools() {
                     alert(`${errMsg} (${err[1]?.message ?? "no details"})`);
                     console.error(errMsg, err);
 
+                    toolWorking = false;
+                });
+            },
+        },
+
+        {
+            title: "Export this script (" + selectedDomain + ")",
+            handler: () => {
+                download(selectedDomain + ".js", editor.session.getValue());
+            },
+        },
+
+        {
+            title: "Export all scripts",
+            handler: () => {
+                toolWorking = true;
+                chrome.storage.sync.get(null, (scripts) => {
+                    const exportable = {};
+
+                    for (const key of Reflect.ownKeys(scripts)) {
+                        exportable[key] = decompress(scripts[key]);
+                    }
+
+                    download(
+                        "injector-scripts.json",
+                        JSON.stringify(exportable, null, 4)
+                    );
                     toolWorking = false;
                 });
             },
