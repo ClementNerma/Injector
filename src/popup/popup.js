@@ -387,6 +387,15 @@ function openTools() {
         {
             title: "Import all scripts from an export file",
             handler: async () => {
+                if (
+                    confirm(
+                        "Do you want to download current scripts first?" +
+                            "This will allow you to restore your saved scripts to what they were before import if something goes wrong."
+                    )
+                ) {
+                    await exportAll()
+                }
+
                 let text
 
                 try {
@@ -453,22 +462,7 @@ function openTools() {
 
         {
             title: "Export all scripts",
-            handler: async () => {
-                const scripts = await new Promise((resolve) =>
-                    chrome.storage.sync.get(null, resolve)
-                )
-
-                const exportable = {}
-
-                for (const key of Reflect.ownKeys(scripts)) {
-                    exportable[key] = decompress(scripts[key])
-                }
-
-                download(
-                    "injector-scripts.json",
-                    JSON.stringify(exportable, null, 4)
-                )
-            },
+            handler: () => exportAll(),
         },
 
         {
@@ -699,6 +693,24 @@ async function importAll(scripts) {
             resolve({ removed: toDel, saved: toSave })
         }
     })
+}
+
+/**
+ * Export all scripts in a JSON file and make the browser download it
+ * @returns {Promise} Once the export is complete
+ */
+async function exportAll() {
+    const scripts = await new Promise((resolve) =>
+        chrome.storage.sync.get(null, resolve)
+    )
+
+    const exportable = {}
+
+    for (const key of Reflect.ownKeys(scripts)) {
+        exportable[key] = decompress(scripts[key])
+    }
+
+    download("injector-scripts.json", JSON.stringify(exportable, null, 4))
 }
 
 /// ========== Start ========== ///
