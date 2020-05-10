@@ -1,21 +1,21 @@
-"use strict";
+"use strict"
 
 // ========== Constants ========== ///
 
 /** Prefix symbol for compressed scripts */
-const COMPRESSION_HEADER = "က䀀";
+const COMPRESSION_HEADER = "က䀀"
 
 /** List of protocols the service can operate on */
-const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
+const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"]
 
 /** Default prelude */
-let DEFAULT_PRELUDE = null;
+let DEFAULT_PRELUDE = null
 
 /** Default generic */
-let DEFAULT_GENERIC = null;
+let DEFAULT_GENERIC = null
 
 /** Default domain script */
-let DEFAULT_DOMAIN_SCRIPT = null;
+let DEFAULT_DOMAIN_SCRIPT = null
 
 // ========== Init ========== ///
 
@@ -25,72 +25,72 @@ let DEFAULT_DOMAIN_SCRIPT = null;
  * @param {string} tooltip A message to show when the status icon is hovered
  */
 function setStatus(icon, tooltip) {
-    statusBar.innerHTML = icon;
-    statusBar.setAttribute("title", tooltip);
+    statusBar.innerHTML = icon
+    statusBar.setAttribute("title", tooltip)
 }
 
-const selector = document.getElementById("domain-selector");
-const editor = ace.edit("editor");
-const toolbox = document.getElementById("toolbox");
-const toolsBtn = document.getElementById("tools");
-const statusBar = document.getElementById("status");
+const selector = document.getElementById("domain-selector")
+const editor = ace.edit("editor")
+const toolbox = document.getElementById("toolbox")
+const toolsBtn = document.getElementById("tools")
+const statusBar = document.getElementById("status")
 
-toolsBtn.addEventListener("click", () => openTools());
+toolsBtn.addEventListener("click", () => openTools())
 
 /// ========== Loading ========== ///
 
 /** Is the toolbox ready to be opened? */
-let openableToolbox = false;
+let openableToolbox = false
 
 /**
  * Load script of a given domain
  * @param {string} domain
  */
 function load(domain) {
-    openableToolbox = false;
+    openableToolbox = false
 
-    setStatus("⌛", "Loading saved data...");
-    toolsBtn.innerHTML = "⌛";
-    editor.setTheme("ace/theme/monokai");
-    editor.setShowPrintMargin(false);
-    editor.setFontSize("14px");
+    setStatus("⌛", "Loading saved data...")
+    toolsBtn.innerHTML = "⌛"
+    editor.setTheme("ace/theme/monokai")
+    editor.setShowPrintMargin(false)
+    editor.setFontSize("14px")
 
     // Make the editor read-only until it's ready
-    editor.setReadOnly(true);
+    editor.setReadOnly(true)
 
     // Save current domain
-    selectedDomain = domain;
+    selectedDomain = domain
 
     // Load saved data for this domain
     chrome.storage.sync.get(null, (scripts) => {
         const setContent = (code) => {
-            code = decompress(code);
-            lastContent = code;
-            editor.session.setValue(code);
-        };
-
-        if (scripts[domain] !== undefined) {
-            setContent(scripts[domain]);
-            editor.gotoLine(Infinity, Infinity);
-        } else if (domain === "<prelude>") {
-            setContent(DEFAULT_PRELUDE);
-        } else if (domain === "<generic>") {
-            setContent(DEFAULT_GENERIC);
-        } else if (domain === currentDomain) {
-            setContent(DEFAULT_DOMAIN_SCRIPT);
-        } else {
-            setContent("");
+            code = decompress(code)
+            lastContent = code
+            editor.session.setValue(code)
         }
 
-        editor.setReadOnly(false);
-        editor.focus();
+        if (scripts[domain] !== undefined) {
+            setContent(scripts[domain])
+            editor.gotoLine(Infinity, Infinity)
+        } else if (domain === "<prelude>") {
+            setContent(DEFAULT_PRELUDE)
+        } else if (domain === "<generic>") {
+            setContent(DEFAULT_GENERIC)
+        } else if (domain === currentDomain) {
+            setContent(DEFAULT_DOMAIN_SCRIPT)
+        } else {
+            setContent("")
+        }
 
-        console.debug("Loaded script for domain: " + domain);
-        setStatus("✔️", "Loaded saved script");
+        editor.setReadOnly(false)
+        editor.focus()
 
-        toolsBtn.innerHTML = "🛠️";
-        openableToolbox = true;
-    });
+        console.debug("Loaded script for domain: " + domain)
+        setStatus("✔️", "Loaded saved script")
+
+        toolsBtn.innerHTML = "🛠️"
+        openableToolbox = true
+    })
 }
 
 /**
@@ -98,14 +98,14 @@ function load(domain) {
  * @param {string} msg Error message
  */
 function loadingError(msg) {
-    editor.session.setValue(`ERROR: ${msg}`);
+    editor.session.setValue(`ERROR: ${msg}`)
 
-    setStatus("❌", msg);
+    setStatus("❌", msg)
 
-    editor.setReadOnly(true);
+    editor.setReadOnly(true)
 
     if (editor.renderer.$cursorLayer) {
-        editor.renderer.$cursorLayer.element.style.display = "none";
+        editor.renderer.$cursorLayer.element.style.display = "none"
     }
 }
 
@@ -115,8 +115,8 @@ if (
     typeof chrome.tabs === "undefined" ||
     typeof chrome.storage === "undefined"
 ) {
-    loadingError("Chrome APIs are not available");
-    throw new Error("Chrome APIs are not available");
+    loadingError("Chrome APIs are not available")
+    throw new Error("Chrome APIs are not available")
 }
 
 /// ========== Saving ========== ///
@@ -127,32 +127,32 @@ if (
  */
 function onChange() {
     if (isSaving) {
-        pendingUpdate = true;
+        pendingUpdate = true
     }
 
-    setStatus("⌛", "Saving changes...");
+    setStatus("⌛", "Saving changes...")
 
-    const code = editor.session.getValue();
+    const code = editor.session.getValue()
 
     const conclude = (status, end) => {
-        setStatus(...status);
+        setStatus(...status)
 
-        isSaving = false;
+        isSaving = false
 
         if (pendingUpdate) {
-            pendingUpdate = false;
-            setTimeout(() => onChange(), 1);
-            resolve();
+            pendingUpdate = false
+            setTimeout(() => onChange(), 1)
+            resolve()
         }
 
-        end();
-    };
+        end()
+    }
 
     return new Promise((resolve, reject) => {
         saveDomainScript(selectedDomain, code)
             .then((status) => conclude(status, resolve))
-            .catch((status) => conclude(status, reject));
-    });
+            .catch((status) => conclude(status, reject))
+    })
 }
 
 /**
@@ -168,7 +168,7 @@ function computeSaving(domain, code) {
             return reject([
                 "✔️",
                 `Saved changes (removed script from storage since it is empty)`,
-            ]);
+            ])
         }
 
         // Don't save default scripts
@@ -182,32 +182,32 @@ function computeSaving(domain, code) {
             reject([
                 "✔️",
                 `Saved changes (removed script from storage since it is equivalent to the default script)`,
-            ]);
+            ])
         }
 
         console.debug(
             `[${domain}] Compressing code (${(code.length / 1024).toFixed(
                 2
             )}) Kb...`
-        );
+        )
 
-        const compressed = COMPRESSION_HEADER + LZString.compressToUTF16(code);
+        const compressed = COMPRESSION_HEADER + LZString.compressToUTF16(code)
 
         // No worry about a potential division by zero here as a non-empty code cannot be empty once compressed
-        const ratio = (code.length / compressed.length).toFixed(1);
+        const ratio = (code.length / compressed.length).toFixed(1)
 
         console.debug(
             `[${domain}] Compressed to ${(code.length / 1024).toFixed(
                 2
             )} Kb (ratio = ${ratio})`
-        );
+        )
 
         if (ratio < 1) {
             console.debug(
                 ratio === 1
                     ? `[${domain}] Ratio is 1, so there is no point to keeping the compressed version.`
                     : `[${domain}] Ratio is negative so the original code will be stored directly instead.`
-            );
+            )
         }
 
         resolve(
@@ -231,8 +231,8 @@ function computeSaving(domain, code) {
                           `Saved changes (${sizeInKB(code.length)})`,
                       ],
                   }
-        );
-    });
+        )
+    })
 }
 
 /**
@@ -245,24 +245,24 @@ function saveDomainScript(domain, code) {
     return new Promise(async (resolve, reject) => {
         function callback(successStatus, codeLength = null) {
             if (chrome.runtime.lastError) {
-                const errMsg = `Failed to save changes: ${chrome.runtime.lastError.message}`;
+                const errMsg = `Failed to save changes: ${chrome.runtime.lastError.message}`
 
                 console.error(
                     `[${domain}] Failed to save changes`,
                     chrome.runtime.lastError
-                );
+                )
 
-                reject(["❌", errMsg]);
+                reject(["❌", errMsg])
             } else {
-                let length = (codeLength / 1024).toFixed(2);
+                let length = (codeLength / 1024).toFixed(2)
 
                 console.debug(
                     code.length === 0
                         ? `[${domain}] Removed script from storage`
                         : `[${domain}] Saved script to storage (${length} Kb)`
-                );
+                )
 
-                resolve(successStatus);
+                resolve(successStatus)
             }
         }
 
@@ -270,42 +270,42 @@ function saveDomainScript(domain, code) {
             const { status, content } = await computeSaving(
                 selectedDomain,
                 code
-            );
+            )
 
             chrome.storage.sync.set({ [selectedDomain]: content }, () =>
                 callback(status, code.length)
-            );
+            )
         } catch (status) {
-            chrome.storage.sync.remove(selectedDomain, () => callback(status));
+            chrome.storage.sync.remove(selectedDomain, () => callback(status))
         }
-    });
+    })
 }
 
 /** Domain name (e.g. "google.fr") - no protocol name, no path, no query parameters, no hashname */
-let currentDomain = null;
+let currentDomain = null
 
 /** Selected domain */
-let selectedDomain = null;
+let selectedDomain = null
 
 /** Current tab's ID */
-let tabId = null;
+let tabId = null
 
 /** Editor's last content (used to check if changes have been made) */
-let lastContent = null;
+let lastContent = null
 
 /** Result of setTimeout() when changes are detected */
-let updateInterval = null;
+let updateInterval = null
 
 /** Are changes being saved? */
-let isSaving = false;
+let isSaving = false
 
 /** Was there an attempt to save changes while older changes were already being saved? */
-let pendingUpdate = false;
+let pendingUpdate = false
 
 /// ========== Tools ========== ///
 
 /** Is the toolbox opened? */
-let isToolboxOpened = false;
+let isToolboxOpened = false
 
 /**
  * Open the toolbox
@@ -314,59 +314,59 @@ function openTools() {
     if (!openableToolbox) {
         alert(
             "The toolbox cannot be opened while a domain script is loading or failed to load."
-        );
-        return;
+        )
+        return
     }
 
     if (isSaving) {
-        alert("The toolbox cannot be opened while saving a script.");
-        return;
+        alert("The toolbox cannot be opened while saving a script.")
+        return
     }
 
     if (isToolboxOpened) {
-        closeToolbox();
-        isToolboxOpened = false;
-        return;
+        closeToolbox()
+        isToolboxOpened = false
+        return
     }
 
-    isToolboxOpened = true;
+    isToolboxOpened = true
 
-    let toolWorking = false;
+    let toolWorking = false
 
-    toolbox.classList.add("opened");
+    toolbox.classList.add("opened")
 
     const tools = [
         {
             title: "Save and reload the page (Ctrl-Enter)",
             handler: () => {
-                window.close();
+                window.close()
                 chrome.tabs.executeScript(tabId, {
                     code: "window.location.reload();",
-                });
+                })
             },
         },
 
         {
             title: "Save and exit (Ctrl-Q)",
             handler: () => {
-                window.close();
+                window.close()
             },
         },
 
         {
             title: "Import a script for this domain",
             handler: () => {
-                toolWorking = true;
+                toolWorking = true
 
-                const promise = uploadText();
+                const promise = uploadText()
 
                 promise.then((text) => {
-                    editor.setValue(text);
-                    onChange();
+                    editor.setValue(text)
+                    onChange()
 
-                    toolWorking = false;
-                    closeToolbox();
-                });
+                    toolWorking = false
+                    closeToolbox()
+                })
 
                 promise.catch((err) => {
                     const errMsg =
@@ -374,39 +374,39 @@ function openTools() {
                             ? "Failed to read input file"
                             : err[1] === "read"
                             ? `Failed to read the text file`
-                            : "Unknown error";
-                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`);
-                    console.error(errMsg, err);
+                            : "Unknown error"
+                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`)
+                    console.error(errMsg, err)
 
-                    toolWorking = false;
-                });
+                    toolWorking = false
+                })
             },
         },
 
         {
             title: "Export this script (" + selectedDomain + ")",
             handler: () => {
-                download(selectedDomain + ".js", editor.session.getValue());
+                download(selectedDomain + ".js", editor.session.getValue())
             },
         },
 
         {
             title: "Export all scripts",
             handler: () => {
-                toolWorking = true;
+                toolWorking = true
                 chrome.storage.sync.get(null, (scripts) => {
-                    const exportable = {};
+                    const exportable = {}
 
                     for (const key of Reflect.ownKeys(scripts)) {
-                        exportable[key] = decompress(scripts[key]);
+                        exportable[key] = decompress(scripts[key])
                     }
 
                     download(
                         "injector-scripts.json",
                         JSON.stringify(exportable, null, 4)
-                    );
-                    toolWorking = false;
-                });
+                    )
+                    toolWorking = false
+                })
             },
         },
 
@@ -414,22 +414,22 @@ function openTools() {
             title: "Close the toolbox",
             handler: () => closeToolbox(),
         },
-    ];
+    ]
 
     for (const tool of tools) {
-        const btn = document.createElement("button");
-        btn.innerText = tool.title;
+        const btn = document.createElement("button")
+        btn.innerText = tool.title
         btn.addEventListener("click", () => {
             if (toolWorking) {
-                alert("Cannot run a tool while another is already running");
-                return;
+                alert("Cannot run a tool while another is already running")
+                return
             }
 
-            console.debug(`Running tool: ${tool.title}...`);
-            tool.handler();
-        });
+            console.debug(`Running tool: ${tool.title}...`)
+            tool.handler()
+        })
 
-        toolbox.appendChild(btn);
+        toolbox.appendChild(btn)
     }
 }
 
@@ -437,8 +437,8 @@ function openTools() {
  * Close the toolbox
  */
 function closeToolbox() {
-    toolbox.classList.remove("opened");
-    toolbox.innerHTML = "";
+    toolbox.classList.remove("opened")
+    toolbox.innerHTML = ""
 }
 
 /// ========== Utilities ========== ///
@@ -462,8 +462,8 @@ function startupFetchInternal(uri) {
                         )
                     )
             )
-            .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`));
-    });
+            .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`))
+    })
 }
 
 /**
@@ -473,27 +473,27 @@ function startupFetchInternal(uri) {
  */
 function download(filename, content) {
     // A link must be created in order to download the blob we'll create in an instant
-    const a = document.createElement("a");
+    const a = document.createElement("a")
 
     // Ensure the link is not visible
-    a.style.display = "none";
-    document.body.appendChild(a);
+    a.style.display = "none"
+    document.body.appendChild(a)
 
     // Create a blob containing our content
-    const blob = new Blob([content], { type: "octet/stream" });
-    const url = window.URL.createObjectURL(blob);
+    const blob = new Blob([content], { type: "octet/stream" })
+    const url = window.URL.createObjectURL(blob)
 
-    a.href = url;
-    a.download = filename;
+    a.href = url
+    a.download = filename
 
     // Download it
-    a.click();
+    a.click()
 
     // Revoke it to avoid keeping it in memory uselessly
-    window.URL.revokeObjectURL(url);
+    window.URL.revokeObjectURL(url)
 
     // Remove the link
-    a.remove();
+    a.remove()
 }
 
 /**
@@ -502,28 +502,28 @@ function download(filename, content) {
  */
 function upload() {
     return new Promise((resolve, reject) => {
-        const uploadBtn = document.createElement("input");
-        uploadBtn.setAttribute("type", "file");
-        uploadBtn.style.display = "none";
+        const uploadBtn = document.createElement("input")
+        uploadBtn.setAttribute("type", "file")
+        uploadBtn.style.display = "none"
 
         uploadBtn.addEventListener(
             "change",
             () => {
-                const file = uploadBtn.files[0];
+                const file = uploadBtn.files[0]
 
                 if (!file) {
-                    reject();
+                    reject()
                 } else {
-                    uploadBtn.remove();
-                    resolve(file);
+                    uploadBtn.remove()
+                    resolve(file)
                 }
             },
             false
-        );
+        )
 
-        document.body.appendChild(uploadBtn);
-        uploadBtn.click();
-    });
+        document.body.appendChild(uploadBtn)
+        uploadBtn.click()
+    })
 }
 
 /**
@@ -533,17 +533,17 @@ function upload() {
  */
 function readUploadedFile(file) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
+        const reader = new FileReader()
         reader.addEventListener("load", () => {
             if (reader.result.length > 1024 * 1024) {
-                reject(new Error("file exceeds 1 MB"));
+                reject(new Error("file exceeds 1 MB"))
             } else {
-                resolve(reader.result);
+                resolve(reader.result)
             }
-        });
-        reader.addEventListener("error", (err) => reject(err));
-        reader.readAsText(file);
-    });
+        })
+        reader.addEventListener("error", (err) => reject(err))
+        reader.readAsText(file)
+    })
 }
 
 /**
@@ -552,16 +552,16 @@ function readUploadedFile(file) {
  */
 function uploadText() {
     return new Promise((resolve, reject) => {
-        const promise = upload();
+        const promise = upload()
 
         promise.then((file) =>
             readUploadedFile(file)
                 .then((text) => resolve(text))
                 .catch((err) => reject(["read", err]))
-        );
+        )
 
-        promise.catch((err) => reject(["upload", err]));
-    });
+        promise.catch((err) => reject(["upload", err]))
+    })
 }
 
 /**
@@ -571,20 +571,20 @@ function uploadText() {
  */
 function decompress(content) {
     if (!content.startsWith(COMPRESSION_HEADER)) {
-        return content;
+        return content
     }
 
     console.debug(
         `Decompressing ${(content.length / 1024).toFixed(2)} Kb of data...`
-    );
+    )
 
     let decompressed = LZString.decompressFromUTF16(
         content.substr(COMPRESSION_HEADER.length)
-    );
+    )
 
-    console.debug("Done!");
+    console.debug("Done!")
 
-    return decompressed;
+    return decompressed
 }
 
 /**
@@ -594,7 +594,7 @@ function decompress(content) {
  * @example sizeInKB(1047) === "1.02"
  */
 function sizeInKB(size) {
-    return (size / 1024).toFixed(2) + " Kb";
+    return (size / 1024).toFixed(2) + " Kb"
 }
 
 /// ========== Start ========== ///
@@ -608,12 +608,12 @@ function startup() {
         // Parse the domain
         const match = tabs[0].url.match(
             /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
-        );
+        )
 
         if (!match) {
             return loadingError(
                 `Failed to parse domain name for URL: ${tabs[0].url}`
-            );
+            )
         }
 
         if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
@@ -623,14 +623,14 @@ function startup() {
                 }".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(
                     ", "
                 )}.`
-            );
+            )
         }
 
-        currentDomain = match[2];
+        currentDomain = match[2]
 
-        console.debug("Parsed domain: " + currentDomain);
+        console.debug("Parsed domain: " + currentDomain)
 
-        tabId = tabs[0].id;
+        tabId = tabs[0].id
 
         // Fetch default scripts
         let [
@@ -641,33 +641,33 @@ function startup() {
             startupFetchInternal("../defaults/prelude.js"),
             startupFetchInternal("../defaults/generic.js"),
             startupFetchInternal("../defaults/domain.js"),
-        ]);
+        ])
 
-        DEFAULT_PRELUDE = defaultPrelude;
-        DEFAULT_GENERIC = defaultGeneric;
-        DEFAULT_DOMAIN_SCRIPT = defaultDomainScript;
+        DEFAULT_PRELUDE = defaultPrelude
+        DEFAULT_GENERIC = defaultGeneric
+        DEFAULT_DOMAIN_SCRIPT = defaultDomainScript
 
         chrome.storage.sync.get(null, (scripts) => {
             // Initialize the domain selector
-            const savedDomains = Reflect.ownKeys(scripts);
+            const savedDomains = Reflect.ownKeys(scripts)
 
             // Add a choice to the domain selector
             const addChoice = (domain) => {
-                const choice = document.createElement("option");
-                choice.setAttribute("value", domain);
-                choice.innerText = domain;
+                const choice = document.createElement("option")
+                choice.setAttribute("value", domain)
+                choice.innerText = domain
 
-                selector.appendChild(choice);
-            };
+                selector.appendChild(choice)
+            }
 
             // Prelude script
-            addChoice("<prelude>");
+            addChoice("<prelude>")
 
             // Generic
-            addChoice("<generic>");
+            addChoice("<generic>")
 
             // Current domain
-            addChoice(currentDomain);
+            addChoice(currentDomain)
 
             // All other domains, sorted by name
             for (const otherDomain of savedDomains.sort()) {
@@ -676,12 +676,12 @@ function startup() {
                     otherDomain !== "<prelude>" &&
                     otherDomain !== "<generic>"
                 ) {
-                    addChoice(otherDomain);
+                    addChoice(otherDomain)
                 }
             }
 
             // Select current domain
-            selector.selectedIndex = 2;
+            selector.selectedIndex = 2
 
             // Listen to domain selection
             selector.addEventListener("change", () => {
@@ -689,37 +689,37 @@ function startup() {
                     selector.options[selector.selectedIndex].getAttribute(
                         "value"
                     )
-                );
-            });
+                )
+            })
 
-            editor.session.setMode("ace/mode/javascript");
+            editor.session.setMode("ace/mode/javascript")
 
             // Detect changes
             editor.addEventListener("input", () => {
                 // This event may be triggered by API calls such as ".setValue()" and in specific situations.
                 // This is why we use a diffing variable to check if changes have to be made.
 
-                const content = editor.session.getValue();
+                const content = editor.session.getValue()
 
                 // If content's length has changed, there are changes of course
                 if (content.length === lastContent.length) {
                     // If the length is the same, we have to compare the actual content
                     if (content === lastContent) {
-                        return;
+                        return
                     }
                 }
 
-                lastContent = content;
+                lastContent = content
 
                 if (updateInterval !== null) {
-                    clearTimeout(updateInterval);
+                    clearTimeout(updateInterval)
                 }
 
                 // Save after 500 ms
-                updateInterval = setTimeout(() => onChange(), 500);
+                updateInterval = setTimeout(() => onChange(), 500)
 
-                setStatus("✍️", "Waiting to save changes...");
-            });
+                setStatus("✍️", "Waiting to save changes...")
+            })
 
             /// ========== Keyboard shortcuts ========== ///
 
@@ -732,12 +732,12 @@ function startup() {
                 // Only exit if the saves were successfully saved
                 exec: () =>
                     onChange().then(() => {
-                        window.close();
+                        window.close()
                         chrome.tabs.executeScript(tabId, {
                             code: "window.location.reload();",
-                        });
+                        })
                     }),
-            });
+            })
 
             editor.commands.addCommand({
                 name: "saveAndExit",
@@ -747,12 +747,12 @@ function startup() {
                 },
                 // Only exit if the saves were successfully saved
                 exec: () => onChange().then(() => window.close()),
-            });
+            })
 
             // Load saved data for this domain
-            load(currentDomain);
-        });
-    });
+            load(currentDomain)
+        })
+    })
 }
 
-startup();
+startup()

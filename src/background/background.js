@@ -1,10 +1,10 @@
-"use strict";
+"use strict"
 
 /** Prefix symbol for compressed scripts */
-const COMPRESSION_HEADER = "က䀀";
+const COMPRESSION_HEADER = "က䀀"
 
 /** List of protocols the service can operate on */
-const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"];
+const SUPPORTED_PROTOCOLS = ["http", "https", "ftp", "sftp", "file"]
 
 /**
  * Fetch an internal URI at startup
@@ -20,24 +20,24 @@ function fetchInternal(uri) {
                     // 2. Get its body as plain text
                     .text()
                     .then((text) => {
-                        const size = (text.length / 1024).toFixed(2);
+                        const size = (text.length / 1024).toFixed(2)
                         console.debug(
                             `Successfully loaded internal URI '${uri}' (${size} Kb)`
-                        );
-                        resolve(text);
+                        )
+                        resolve(text)
                     })
                     .catch(() => {
                         console.error(
                             `Failed to decode text response from internal URI '${uri}'`
-                        );
-                        reject();
+                        )
+                        reject()
                     })
             )
             .catch(() => {
-                console.error(`Failed to fetch internal URI '${uri}'`);
-                reject();
-            });
-    });
+                console.error(`Failed to fetch internal URI '${uri}'`)
+                reject()
+            })
+    })
 }
 
 /**
@@ -47,12 +47,12 @@ function fetchInternal(uri) {
  */
 function decompress(content) {
     if (!content.startsWith(COMPRESSION_HEADER)) {
-        return content;
+        return content
     }
 
     return LZString.decompressFromUTF16(
         content.substr(COMPRESSION_HEADER.length)
-    );
+    )
 }
 
 /**
@@ -66,7 +66,7 @@ function decompress(content) {
  */
 function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
     // Determine if the script is immediate
-    const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/);
+    const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/)
 
     if (isImmediate || tab.status === "complete") {
         // Prepare the code to inject in the current tab
@@ -78,15 +78,15 @@ function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
             plainPrelude,
             script,
             `\n;})(${JSON.stringify(tab)});`,
-        ].join("");
+        ].join("")
 
         // Inject it
         chrome.tabs.executeScript(tabId, {
             code,
             runAt: isImmediate ? "document_start" : "document_idle",
-        });
+        })
 
-        console.debug(`Injected ${scriptName} in a tab`);
+        console.debug(`Injected ${scriptName} in a tab`)
     }
 }
 
@@ -101,34 +101,32 @@ Promise.all([
         if (!tab.url) {
             console.debug(
                 "Encountered tab without URL (probably a browser internal page)"
-            );
-            return;
+            )
+            return
         }
 
-        const _domain = tab.url.match(
-            /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
-        );
+        const _domain = tab.url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/)
 
         if (!_domain) {
             console.debug(
                 `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
-            );
-            return;
+            )
+            return
         }
 
         if (!SUPPORTED_PROTOCOLS.includes(_domain[1])) {
             console.debug(
                 `Ignoring script injection for unsupported protocol "${_domain[1]}"`
-            );
-            return;
+            )
+            return
         }
 
-        const domain = _domain[2];
+        const domain = _domain[2]
 
         // Retrieve scripts from the storage
         chrome.storage.sync.get(null, (scripts) => {
             // Decompress the prelude
-            const prelude = decompress(scripts["<prelude>"] ?? DEFAULT_PRELUDE);
+            const prelude = decompress(scripts["<prelude>"] ?? DEFAULT_PRELUDE)
 
             // Inject the generic
             inject(
@@ -138,21 +136,19 @@ Promise.all([
                 decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
                 "generic",
                 "generic"
-            );
+            )
 
             // Get the domain script
-            let domainScript;
+            let domainScript
 
             if (scripts[domain] === undefined) {
-                console.debug(
-                    `No saved script was found for domain: ${domain}`
-                );
+                console.debug(`No saved script was found for domain: ${domain}`)
 
-                domainScript = decompress(DEFAULT_DOMAIN_SCRIPT);
+                domainScript = decompress(DEFAULT_DOMAIN_SCRIPT)
             } else {
-                console.debug(`Loaded saved script for domain: ${domain}`);
+                console.debug(`Loaded saved script for domain: ${domain}`)
 
-                domainScript = decompress(scripts[domain]);
+                domainScript = decompress(scripts[domain])
             }
 
             // Inject it as well
@@ -163,7 +159,7 @@ Promise.all([
                 decompress(domainScript),
                 "domainScript",
                 "domain script"
-            );
-        });
-    });
-});
+            )
+        })
+    })
+})
