@@ -159,16 +159,19 @@ function onChange() {
  * Compute the content to save for a domain
  * @param {string} domain Domain name
  * @param {string} code Code to save
- * @returns {Promise} A promise resolving with the content to save or rejecting if the code should be removed from storage (e.g. empty script)
+ * @returns {Promise} Code is processed in parallel
  */
 function computeSaving(domain, code) {
     return new Promise((resolve, reject) => {
         // Don't save empty scripts
         if (code.length === 0) {
-            return reject([
-                "✔️",
-                `Saved changes (removed script from storage since it is empty)`,
-            ])
+            return reject({
+                action: "remove",
+                status: [
+                    "✔️",
+                    `Saved changes (removed script from storage since it is empty)`,
+                ],
+            })
         }
 
         // Don't save default scripts
@@ -179,10 +182,13 @@ function computeSaving(domain, code) {
                 domain !== "<generic>" &&
                 code === DEFAULT_DOMAIN_SCRIPT)
         ) {
-            reject([
-                "✔️",
-                `Saved changes (removed script from storage since it is equivalent to the default script)`,
-            ])
+            reject({
+                action: "remove",
+                status: [
+                    "✔️",
+                    `Saved changes (removed script from storage since it is equivalent to the default script)`,
+                ],
+            })
         }
 
         console.debug(
@@ -213,6 +219,7 @@ function computeSaving(domain, code) {
         resolve(
             ratio > 1
                 ? {
+                      action: "save",
                       content: compressed,
                       status: [
                           "✔️📦",
@@ -225,6 +232,7 @@ function computeSaving(domain, code) {
                   }
                 : // Use uncompressed version if compressed version is larger
                   {
+                      action: "save",
                       content: code,
                       status: [
                           "✔️",
@@ -243,7 +251,7 @@ function computeSaving(domain, code) {
  */
 function saveDomainScript(domain, code) {
     return new Promise(async (resolve, reject) => {
-        function callback(successStatus, codeLength = null) {
+        function callback() {
             if (chrome.runtime.lastError) {
                 const errMsg = `Failed to save changes: ${chrome.runtime.lastError.message}`
 
@@ -254,7 +262,7 @@ function saveDomainScript(domain, code) {
 
                 reject(["❌", errMsg])
             } else {
-                let length = (codeLength / 1024).toFixed(2)
+                let length = (content.length / 1024).toFixed(2)
 
                 console.debug(
                     code.length === 0
@@ -262,21 +270,21 @@ function saveDomainScript(domain, code) {
                         : `[${domain}] Saved script to storage (${length} Kb)`
                 )
 
-                resolve(successStatus)
+                resolve(status)
             }
         }
 
-        try {
-            const { status, content } = await computeSaving(
-                selectedDomain,
-                code
-            )
+        const { action, status, content } = await computeSaving(
+            selectedDomain,
+            code
+        )
 
+        if (action === "remove") {
+            chrome.storage.sync.remove(selectedDomain, callback)
+        } else {
             chrome.storage.sync.set({ [selectedDomain]: content }, () =>
-                callback(status, code.length)
+                callback()
             )
-        } catch (status) {
-            chrome.storage.sync.remove(selectedDomain, () => callback(status))
         }
     })
 }
