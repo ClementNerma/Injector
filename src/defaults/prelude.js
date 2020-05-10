@@ -77,6 +77,9 @@ const hideAndRemoveAllContinuously = (selector, refresh = 20) => {
     setInterval(() => removeAll(selector), refresh);
 };
 
+// Run a function in parallel of the current flow
+const parallel = (callback) => setTimeout(callback, 1);
+
 // Run a command when the document is fully loaded
 // Useful for immediate scripts that also want to run another function
 //  only after the DOM is ready
