@@ -165,7 +165,7 @@ function computeSaving(domain, code) {
     return new Promise((resolve, reject) => {
         // Don't save empty scripts
         if (code.length === 0) {
-            return reject({
+            return resolve({
                 action: "remove",
                 status: [
                     "✔️",
@@ -182,7 +182,7 @@ function computeSaving(domain, code) {
                 domain !== "<generic>" &&
                 code === DEFAULT_DOMAIN_SCRIPT)
         ) {
-            reject({
+            resolve({
                 action: "remove",
                 status: [
                     "✔️",
@@ -262,19 +262,19 @@ function saveDomainScript(domain, code) {
 
                 reject(["❌", errMsg])
             } else {
-                let length = (content.length / 1024).toFixed(2)
-
                 console.debug(
                     code.length === 0
                         ? `[${domain}] Removed script from storage`
-                        : `[${domain}] Saved script to storage (${length} Kb)`
+                        : `[${domain}] Saved script to storage (${(
+                              content.length / 1024
+                          ).toFixed(2)} Kb)`
                 )
 
                 resolve(status)
             }
         }
 
-        const { action, status, content } = await computeSaving(
+        const { action, content, status } = await computeSaving(
             selectedDomain,
             code
         )
