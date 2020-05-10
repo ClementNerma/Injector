@@ -134,7 +134,9 @@ function onChange() {
 
     const code = editor.session.getValue();
 
-    const conclude = (end) => {
+    const conclude = (status, end) => {
+        setStatus(...status);
+
         isSaving = false;
 
         if (pendingUpdate) {
@@ -147,107 +149,134 @@ function onChange() {
     };
 
     return new Promise((resolve, reject) => {
-        updateCode(code)
-            .then(() => conclude(resolve))
-            .catch(() => conclude(reject));
+        saveDomainScript(selectedDomain, code)
+            .then((status) => conclude(status, resolve))
+            .catch((status) => conclude(status, reject));
     });
 }
 
 /**
- * Save changes to storage
- * @param {string} code
- * @returns {Promise}
+ * Compute the content to save for a domain
+ * @param {string} domain Domain name
+ * @param {string} code Code to save
+ * @returns {Promise} A promise resolving with the content to save or rejecting if the code should be removed from storage (e.g. empty script)
  */
-function updateCode(code) {
+function computeSaving(domain, code) {
     return new Promise((resolve, reject) => {
-        function callback() {
+        // Don't save empty scripts
+        if (code.length === 0) {
+            return reject([
+                "✔️",
+                `Saved changes (removed script from storage since it is empty)`,
+            ]);
+        }
+
+        // Don't save default scripts
+        if (
+            (domain === "<prelude>" && code === DEFAULT_PRELUDE) ||
+            (domain === "<generic>" && code === DEFAULT_GENERIC) ||
+            (domain !== "<prelude>" &&
+                domain !== "<generic>" &&
+                code === DEFAULT_DOMAIN_SCRIPT)
+        ) {
+            reject([
+                "✔️",
+                `Saved changes (removed script from storage since it is equivalent to the default script)`,
+            ]);
+        }
+
+        console.debug(
+            `[${domain}] Compressing code (${(code.length / 1024).toFixed(
+                2
+            )}) Kb...`
+        );
+
+        const compressed = COMPRESSION_HEADER + LZString.compressToUTF16(code);
+
+        // No worry about a potential division by zero here as a non-empty code cannot be empty once compressed
+        const ratio = (code.length / compressed.length).toFixed(1);
+
+        console.debug(
+            `[${domain}] Compressed to ${(code.length / 1024).toFixed(
+                2
+            )} Kb (ratio = ${ratio})`
+        );
+
+        if (ratio < 1) {
+            console.debug(
+                ratio === 1
+                    ? `[${domain}] Ratio is 1, so there is no point to keeping the compressed version.`
+                    : `[${domain}] Ratio is negative so the original code will be stored directly instead.`
+            );
+        }
+
+        resolve(
+            ratio > 1
+                ? {
+                      content: compressed,
+                      status: [
+                          "✔️📦",
+                          `Saved changes (${sizeInKB(
+                              code.length
+                          )} plain, ${sizeInKB(
+                              compressed.length
+                          )} compressed, ratio = ${ratio}`,
+                      ],
+                  }
+                : // Use uncompressed version if compressed version is larger
+                  {
+                      content: code,
+                      status: [
+                          "✔️",
+                          `Saved changes (${sizeInKB(code.length)})`,
+                      ],
+                  }
+        );
+    });
+}
+
+/**
+ * Save a domain's script to storage
+ * @param {string} domain
+ * @param {string} code
+ * @returns {Promise} Promise resolving or rejecting in case of error with an array containing the status icon (one char) and the status message
+ */
+function saveDomainScript(domain, code) {
+    return new Promise(async (resolve, reject) => {
+        function callback(successStatus, codeLength = null) {
             if (chrome.runtime.lastError) {
-                const errMsg =
-                    "Failed to save changes: " +
-                    chrome.runtime.lastError.message;
+                const errMsg = `Failed to save changes: ${chrome.runtime.lastError.message}`;
 
                 console.error(
-                    "Failed to save changes",
+                    `[${domain}] Failed to save changes`,
                     chrome.runtime.lastError
                 );
 
-                setStatus("❌", errMsg);
-                reject();
+                reject(["❌", errMsg]);
             } else {
+                let length = (codeLength / 1024).toFixed(2);
+
                 console.debug(
                     code.length === 0
-                        ? 'Removed script for domain "' +
-                              selectedDomain +
-                              '" from storage'
-                        : 'Saved script for domain "' +
-                              selectedDomain +
-                              '" to storage'
+                        ? `[${domain}] Removed script from storage`
+                        : `[${domain}] Saved script to storage (${length} Kb)`
                 );
 
-                setStatus(successStatus[0], successStatus[1]);
-                resolve();
+                resolve(successStatus);
             }
         }
 
-        let successStatus = null;
-
-        if (code.length === 0) {
-            chrome.storage.sync.remove(selectedDomain, callback);
-            successStatus = [
-                "✔️",
-                `Saved changes (removed script from storage since it is empty)`,
-            ];
-        } else if (
-            (selectedDomain === "<prelude>" && code === DEFAULT_PRELUDE) ||
-            (selectedDomain === "<generic>" && code === DEFAULT_GENERIC) ||
-            (selectedDomain !== "<prelude>" &&
-                selectedDomain !== "<generic>" &&
-                code === DEFAULT_DOMAIN_SCRIPT)
-        ) {
-            chrome.storage.sync.remove(selectedDomain, callback);
-            successStatus = [
-                "✔️",
-                `Saved changes (removed script from storage since it is equivalent to the default script)`,
-            ];
-        } else {
-            console.debug(
-                `Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`
+        try {
+            const { status, content } = await computeSaving(
+                selectedDomain,
+                code
             );
 
-            const compressed =
-                COMPRESSION_HEADER + LZString.compressToUTF16(code);
-
-            // No worry about a potential division by zero here as 'code.length === 0' was already handled before
-            const ratio = (code.length / compressed.length).toFixed(1);
-
-            console.debug(
-                `Compressed to ${(code.length / 1024).toFixed(
-                    2
-                )} Kb (ratio = ${ratio})`
+            chrome.storage.sync.set({ [selectedDomain]: content }, () =>
+                callback(status, code.length)
             );
-
-            if (ratio > 0) {
-                successStatus = [
-                    "✔️📦",
-                    `Saved changes (${sizeInKB(code.length)} plain, ${sizeInKB(
-                        compressed.length
-                    )} compressed, ratio = ${ratio}`,
-                ];
-                code = compressed;
-            } else {
-                successStatus = [
-                    "✔️",
-                    `Saved changes (${sizeInKB(code.length)})`,
-                ];
-
-                console.debug(
-                    ratio === 0
-                        ? `Ratio is 0, there is no point to keeping the compressed version.`
-                        : `Ratio is negative so the original code will be stored directly instead.`
-                );
-            }
-
-            chrome.storage.sync.set({ [selectedDomain]: code }, callback);
+        } catch (status) {
+            chrome.storage.sync.remove(selectedDomain, () => callback(status));
         }
     });
 }
