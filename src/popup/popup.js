@@ -339,8 +339,6 @@ function openTools() {
 
     isToolboxOpened = true
 
-    let toolWorking = false
-
     toolbox.classList.add("opened")
 
     const tools = [
@@ -363,20 +361,12 @@ function openTools() {
 
         {
             title: "Import a script for this domain",
-            handler: () => {
-                toolWorking = true
+            handler: async () => {
+                let text
 
-                const promise = uploadText()
-
-                promise.then((text) => {
-                    editor.setValue(text)
-                    onChange()
-
-                    toolWorking = false
-                    closeToolbox()
-                })
-
-                promise.catch((err) => {
+                try {
+                    text = await uploadText()
+                } catch (err) {
                     const errMsg =
                         err[0] === "upload"
                             ? "Failed to read input file"
@@ -385,17 +375,18 @@ function openTools() {
                             : "Unknown error"
                     alert(`${errMsg} (${err[1]?.message ?? "no details"})`)
                     console.error(errMsg, err)
+                    return
+                }
 
-                    toolWorking = false
-                })
+                editor.setValue(text)
+                onChange()
+                closeToolbox()
             },
         },
 
         {
             title: "Import all scripts from an export file",
             handler: async () => {
-                toolWorking = true
-
                 let text
 
                 try {
@@ -435,8 +426,6 @@ function openTools() {
                         : ""
 
                     alert(`Failed to import all scripts` + delError + saveError)
-
-                    toolWorking = false
                     return
                 }
 
@@ -449,8 +438,6 @@ function openTools() {
                 if (selectedDomain in json) {
                     load(selectedDomain)
                 }
-
-                toolWorking = false
             },
         },
 
@@ -463,21 +450,21 @@ function openTools() {
 
         {
             title: "Export all scripts",
-            handler: () => {
-                toolWorking = true
-                chrome.storage.sync.get(null, (scripts) => {
-                    const exportable = {}
+            handler: async () => {
+                const scripts = await new Promise((resolve) =>
+                    chrome.storage.sync.get(null, resolve)
+                )
 
-                    for (const key of Reflect.ownKeys(scripts)) {
-                        exportable[key] = decompress(scripts[key])
-                    }
+                const exportable = {}
 
-                    download(
-                        "injector-scripts.json",
-                        JSON.stringify(exportable, null, 4)
-                    )
-                    toolWorking = false
-                })
+                for (const key of Reflect.ownKeys(scripts)) {
+                    exportable[key] = decompress(scripts[key])
+                }
+
+                download(
+                    "injector-scripts.json",
+                    JSON.stringify(exportable, null, 4)
+                )
             },
         },
 
@@ -486,6 +473,8 @@ function openTools() {
             handler: () => closeToolbox(),
         },
     ]
+
+    let toolWorking = false
 
     for (const tool of tools) {
         const btn = document.createElement("button")
@@ -497,7 +486,14 @@ function openTools() {
             }
 
             console.debug(`Running tool: ${tool.title}...`)
-            tool.handler()
+
+            const result = tool.handler()
+
+            if (result instanceof Promise) {
+                toolWorking = true
+                result.then(() => (toolWorking = false))
+                result.then(() => (toolWorking = false))
+            }
         })
 
         toolbox.appendChild(btn)
