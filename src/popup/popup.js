@@ -392,6 +392,69 @@ function openTools() {
         },
 
         {
+            title: "Import all scripts from an export file",
+            handler: async () => {
+                toolWorking = true
+
+                let text
+
+                try {
+                    text = await uploadText()
+                } catch (err) {
+                    const errMsg =
+                        err[0] === "upload"
+                            ? "Failed to read input file"
+                            : err[1] === "read"
+                            ? `Failed to read the text file`
+                            : "Unknown error"
+                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`)
+                    console.error(errMsg, err)
+
+                    toolWorking = false
+                    return
+                }
+
+                let json
+
+                try {
+                    json = JSON.parse(text)
+                } catch (e) {
+                    alert("Failed to parse provided file as JSON")
+                    console.error("Failed to parse JSON file", e)
+                    return
+                }
+
+                try {
+                    await importAll(json)
+                } catch (err) {
+                    const delError = err.delError
+                        ? ` (${err.delError.message})`
+                        : ""
+                    const saveError = err.saveError
+                        ? ` (${err.saveError.message})`
+                        : ""
+
+                    alert(`Failed to import all scripts` + delError + saveError)
+
+                    toolWorking = false
+                    return
+                }
+
+                alert(
+                    `All ${
+                        Reflect.ownKeys(json).length
+                    } scripts were imported successfully!`
+                )
+
+                if (selectedDomain in json) {
+                    load(selectedDomain)
+                }
+
+                toolWorking = false
+            },
+        },
+
+        {
             title: "Export this script (" + selectedDomain + ")",
             handler: () => {
                 download(selectedDomain + ".js", editor.session.getValue())
@@ -603,6 +666,40 @@ function decompress(content) {
  */
 function sizeInKB(size) {
     return (size / 1024).toFixed(2) + " Kb"
+}
+
+/**
+ * Import multiple scripts at once
+ * @param {Object.<string, string>} scripts Keys are domain names, values are script contents
+ * @returns {Promise} A promise resolving with removed and saved scripts, and failing with the list of failed scripts (provided object's keys)
+ */
+async function importAll(scripts) {
+    const toSave = {}
+    const toDel = []
+
+    for (const domain of Reflect.ownKeys(scripts)) {
+        const { action, content } = await computeSaving(domain, scripts[domain])
+
+        if (action === "remove") {
+            toDel.push(domain)
+        } else {
+            toSave[domain] = content
+        }
+    }
+
+    await new Promise((resolve) => chrome.storage.sync.remove(toDel, resolve))
+    const delError = chrome.runtime.lastError
+
+    await new Promise((resolve) => chrome.storage.sync.set(toSave, resolve))
+    const saveError = chrome.runtime.lastError
+
+    return new Promise((resolve, reject) => {
+        if (delError || saveError) {
+            reject({ delError, saveError })
+        } else {
+            resolve({ removed: toDel, saved: toSave })
+        }
+    })
 }
 
 /// ========== Start ========== ///
