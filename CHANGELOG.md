@@ -23,3 +23,7 @@
 # Version 1.4 (26-04-2020)
 
 * Introduce [the generic](README.md#the-generic)
+
+# Version 1.5 (10-05-2020)
+
+* Introduce import tools
