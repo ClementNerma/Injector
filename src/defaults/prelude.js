@@ -15,7 +15,12 @@ const styleOf = (selector) => {
 }
 
 // Watch for an element to appear
-const waitFor = (selector, callback, delay = 10000, refresh = 10) => {
+const waitFor = (
+    selector,
+    callback,
+    delayAfterDomReady = 10000,
+    refresh = 10
+) => {
     const init = q(selector)
 
     if (init) {
@@ -23,12 +28,17 @@ const waitFor = (selector, callback, delay = 10000, refresh = 10) => {
         return
     }
 
-    const started = Date.now()
+    const started = null
+
     const waiter = setInterval(() => {
         const target = q(selector)
 
+        if (!started && domReady) {
+            started = Date.now()
+        }
+
         if (!target) {
-            if (Date.now() - started >= delay) {
+            if (Date.now() - started >= delayAfterDomReady) {
                 clearInterval(waiter)
             }
 
