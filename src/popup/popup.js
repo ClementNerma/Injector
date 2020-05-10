@@ -432,12 +432,15 @@ function openTools() {
                 alert(
                     `All ${
                         Reflect.ownKeys(json).length
-                    } scripts were imported successfully!`
+                    } scripts were imported successfully!\n` +
+                        "This popup will now be closed in order to reload all domain informations."
                 )
 
-                if (selectedDomain in json) {
-                    load(selectedDomain)
-                }
+                console.debug(
+                    "Now closing after importing scripts from a JSON file..."
+                )
+
+                window.close()
             },
         },
 
