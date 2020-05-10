@@ -42,6 +42,8 @@ Your scripts are synchronized between all computers through your Google account 
 
 You can still load and save scripts offline, though.
 
+It is also possible to export and import scripts individually or as a whole, which allows to export/import data even in browsers that do not support synchronization.
+
 ## License
 
 This project is released under the [Apache-2.0](LICENSE.md) license terms.
