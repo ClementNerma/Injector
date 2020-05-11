@@ -38,7 +38,7 @@ const waitFor = (
         }
 
         if (!target) {
-            if (Date.now() - started >= delayAfterDomReady) {
+            if (domReady && Date.now() - started >= delayAfterDomReady) {
                 clearInterval(waiter)
             }
 
