@@ -47,6 +47,9 @@ declare(
 
             if (!target) {
                 if (isDomReady && Date.now() - started >= delayAfterDomReady) {
+                    console.debug(
+                        `Dropping waitFor() after delay (${delayAfterDomReady} ms) is expired.`
+                    )
                     clearInterval(waiter)
                 }
 
