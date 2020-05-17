@@ -17,6 +17,7 @@ const {
     hideAndRemoveAll,
     hideAndRemoveAllContinuously,
     parallel,
+    matchRegex,
     onLoad,
     queryp,
     loc,

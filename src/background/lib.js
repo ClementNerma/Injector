@@ -96,6 +96,14 @@ declare("hideAndRemoveAllContinuously", (selector, refresh = 20) => {
 // Run a function in parallel of the current flow
 declare("parallel", (callback) => setTimeout(callback, 1))
 
+// Perform an action if a string matches a regular expression
+// The match's informations are provided to the callback
+// The callback return's value is returned in case of match, else `null` is returned
+declare("matchRegex", (str, regex, callback) => {
+    const match = str.match(regex)
+    return match ? callback(match) : null
+})
+
 // Run a command when the document is fully loaded
 // Useful for immediate scripts that also want to run another function
 //  only after the DOM is ready
