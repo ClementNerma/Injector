@@ -1,5 +1,10 @@
 # Changelog
 
+### Version 1.6 (17-05-2020)
+
+-   Introduce the library to avoid breaking changes and/or lack of update if the default prelude has been changed
+-   Move the prelude's current utilities to the library
+
 ### Version 1.5 (10-05-2020)
 
 -   Introduce import tools
