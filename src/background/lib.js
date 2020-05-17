@@ -103,5 +103,5 @@ declare("onLoad", (callback) => {
     }
 })
 
-// Get the current URL's query parameters (returns an URLSearchParams object)
-declare("params", () => new URLSearchParams(window.location.search))
+// Get the current URL's query parameters and/or update it
+declare("queryp", new URLSearchParams(window.location.search))

@@ -83,7 +83,7 @@ function inject(
             `;(function injector_domain_script(__tab) {`,
             `  if ("$injector_${varName}_run" in window) return ;`,
             `  const $lib = {};`,
-            `  (declare => { ${plainLib} })((name, callback) => { $lib[name] = callback; });`,
+            `  (declare => { ${plainLib} })((name, value) => { $lib[name] = value; });`,
             `  window.$injector_${varName}_run = true;`,
             `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
             plainPrelude,

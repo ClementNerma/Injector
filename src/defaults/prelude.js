@@ -18,5 +18,5 @@ const {
     hideAndRemoveAllContinuously,
     parallel,
     onLoad,
-    params,
+    queryp,
 } = $lib
