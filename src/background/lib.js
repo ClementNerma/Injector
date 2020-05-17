@@ -36,7 +36,7 @@ declare(
             return
         }
 
-        const started = null
+        let started = null
 
         const waiter = setInterval(() => {
             const target = $lib.q(selector)
