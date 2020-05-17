@@ -1,6 +1,7 @@
 // A script that is inserted before every other scripts
-// The size limit for all scripts is 8 KB after LZString compression
+// The size limit is 8 KB after LZString compression
 // You may access informations about the current tab with the '__tab' constant
+// Also, many utility functions are provided through the '$lib' constant
 
 // Select an element using a CSS selector
 const q = (selector) => document.querySelector(selector)
