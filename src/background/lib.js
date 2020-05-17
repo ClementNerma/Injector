@@ -103,5 +103,8 @@ declare("onLoad", (callback) => {
     }
 })
 
+// Get informations on the current URL
+declare("loc", window.location)
+
 // Get the current URL's query parameters and/or update it
 declare("queryp", new URLSearchParams(window.location.search))

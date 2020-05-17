@@ -19,4 +19,5 @@ const {
     parallel,
     onLoad,
     queryp,
+    loc,
 } = $lib
