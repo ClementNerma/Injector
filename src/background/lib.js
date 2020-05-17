@@ -14,7 +14,7 @@ declare("qa", (selector) => Array.from(document.querySelectorAll(selector)))
 
 // Get the style of an element matching a CSS selector
 declare("styleOf", (selector) => {
-    const el = document.querySelector(selector)
+    const el = $lib.q(selector)
     return el ? el.style : null
 })
 
@@ -22,14 +22,14 @@ declare("styleOf", (selector) => {
 declare("css", (css) => {
     const stylesheet = document.createElement("style")
     stylesheet.innerHTML = css
-    waitFor("head", (head) => head.appendChild(stylesheet))
+    $lib.waitFor("head", (head) => head.appendChild(stylesheet))
 })
 
 // Watch for an element to appear
 declare(
     "waitFor",
     (selector, callback, delayAfterDomReady = 10000, refresh = 10) => {
-        const init = q(selector)
+        const init = $lib.q(selector)
 
         if (init) {
             callback(init, 0)
@@ -39,7 +39,7 @@ declare(
         const started = null
 
         const waiter = setInterval(() => {
-            const target = q(selector)
+            const target = $lib.q(selector)
 
             if (!started && isDomReady) {
                 started = Date.now()
@@ -60,33 +60,37 @@ declare(
 )
 
 // Hide an element
-declare("hide", (selector) => injectStyle(`${selector} { display: none; }`))
+declare("hide", (selector) => $lib.css(`${selector} { display: none; }`))
 
 // Remove an element
-declare("remove", (selector) => q(selector)?.remove())
+declare("remove", (selector) => $lib.q(selector)?.remove())
 
 // Remove all elements matching a selector
-declare("removeAll", (selector) => qa(selector).forEach((el) => el.remove()))
+declare("removeAll", (selector) =>
+    $lib.qa(selector).forEach((el) => el.remove())
+)
 
 // Remove an element when it appears
-declare("removeReady", (selector) => waitFor(selector, (el) => el.remove()))
+declare("removeReady", (selector) =>
+    $lib.waitFor(selector, (el) => el.remove())
+)
 
 // Hide an element and remove it when it appears
 declare("hideAndRemove", (selector) => {
-    hide(selector)
-    removeReady(selector)
+    $lib.hide(selector)
+    $lib.removeReady(selector)
 })
 
 // Hide and remove all elements matching a selector when they are appear (the first time only)
 declare("hideAndRemoveAll", (selector) => {
-    hide(selector)
-    waitFor(selector, (_) => removeAll(selector))
+    $lib.hide(selector)
+    $lib.waitFor(selector, (_) => removeAll(selector))
 })
 
 // Hide and remove all elements matching a selector when they are appear
 declare("hideAndRemoveAllContinuously", (selector, refresh = 20) => {
-    hide(selector)
-    setInterval(() => removeAll(selector), refresh)
+    $lib.hide(selector)
+    setInterval(() => $lib.removeAll(selector), refresh)
 })
 
 // Run a function in parallel of the current flow
