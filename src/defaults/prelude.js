@@ -18,4 +18,5 @@ const {
     hideAndRemoveAllContinuously,
     parallel,
     onLoad,
+    params,
 } = $lib

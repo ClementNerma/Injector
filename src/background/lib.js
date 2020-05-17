@@ -102,3 +102,6 @@ declare("onLoad", (callback) => {
         window.addEventListener("load", () => callback())
     }
 })
+
+// Get the current URL's query parameters (returns an URLSearchParams object)
+declare("params", () => new URLSearchParams(window.location.search))
