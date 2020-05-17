@@ -12,15 +12,17 @@ _Injector_ is a Chromium extension that allow you to inject a JavaScript code in
 
 You can also press `Ctrl-Q` to save and quit, without reloading the page.
 
-## Scripts prelude
+## The prelude
 
-Before each domain's script, a _prelude_ script is inserted. It contains nothing by default but can be changed through the `<prelude>` option in the popup's dropdown.
+Before each domain's script, the _prelude_ script is inserted. It contains nothing by default but can be changed through the `<prelude>` option in the popup's dropdown.
+
+It can access all items declared in the library, which is a file run in the background that declares a set of useful tools to deal with the most common tasks such as injecting a custom stylesheet in the page, hiding an element, etc.
 
 Also, all scripts (including the prelude) have access to the `__tab` object, which contains informations on the active tab. It's a [`chrome.tabs.Tab`](https://developer.chrome.com/extensions/tabs#type-Tab).
 
 ## The generic
 
-A _generic_ script is executed on every domain. It can be accessed through the `<generic>` option in the popup's dropdown.
+The _generic_ script is executed on every domain. It can be accessed through the `<generic>` option in the popup's dropdown.
 
 Note that the prelude is inserted before the generic as well.
 
@@ -43,6 +45,10 @@ Your scripts are synchronized between all computers through your Google account 
 You can still load and save scripts offline, though.
 
 It is also possible to export and import scripts individually or as a whole, which allows to export/import data even in browsers that do not support synchronization.
+
+## Changelog
+
+The changelog is available in the [dedicated file](CHANGELOG.md).
 
 ## License
 
