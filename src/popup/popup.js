@@ -373,9 +373,11 @@ function openTools() {
                             : err[1] === "read"
                             ? `Failed to read the text file`
                             : "Unknown error"
-                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`)
-                    console.error(errMsg, err)
-                    return
+
+                    return reject([
+                        `${errMsg} (${err[1]?.message ?? "no details"})`,
+                        err,
+                    ])
                 }
 
                 editor.setValue(text)
@@ -407,11 +409,10 @@ function openTools() {
                             : err[1] === "read"
                             ? `Failed to read the text file`
                             : "Unknown error"
-                    alert(`${errMsg} (${err[1]?.message ?? "no details"})`)
-                    console.error(errMsg, err)
-
-                    toolWorking = false
-                    return
+                    return reject([
+                        `${errMsg} (${err[1]?.message ?? "no details"})`,
+                        err,
+                    ])
                 }
 
                 let json
@@ -419,9 +420,7 @@ function openTools() {
                 try {
                     json = JSON.parse(text)
                 } catch (e) {
-                    alert("Failed to parse provided file as JSON")
-                    console.error("Failed to parse JSON file", e)
-                    return
+                    reject("Failed to parse provided file as JSON", e)
                 }
 
                 try {
@@ -434,8 +433,10 @@ function openTools() {
                         ? ` (${err.saveError.message})`
                         : ""
 
-                    alert(`Failed to import all scripts` + delError + saveError)
-                    return
+                    return reject([
+                        `Failed to import all scripts` + delError + saveError,
+                        err,
+                    ])
                 }
 
                 alert(
@@ -488,7 +489,11 @@ function openTools() {
 
             if (result instanceof Promise) {
                 toolWorking = true
-                result.then(() => (toolWorking = false))
+                result.catch((err) => {
+                    alert("ERROR: " + err[0])
+                    console.error(err[0], err[1])
+                    toolWorking = false
+                })
                 result.then(() => (toolWorking = false))
             }
         })
