@@ -59,12 +59,21 @@ function decompress(content) {
  * Inject a script at the right timing
  * @param {number} tabId ID of the tab to inject the script in
  * @param {object} tab Chrome Tab object
- * @param {script} plainPrelude The decompressed prelude
- * @param {script} script The compressed script
+ * @param {string} plainLib The decompressed library
+ * @param {string} plainPrelude The decompressed prelude
+ * @param {string} script The compressed script
  * @param {string} varName The script's variable-compliant name (e.g. "domainScript")
  * @param {script} scriptName The script's name (e.g. "domain script")
  */
-function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
+function inject(
+    tabId,
+    tab,
+    plainLib,
+    plainPrelude,
+    script,
+    varName,
+    scriptName
+) {
     // Determine if the script is immediate
     const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/)
 
@@ -73,6 +82,8 @@ function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
         const code = [
             `;(function injector_domain_script(__tab) {`,
             `  if ("$injector_${varName}_run" in window) return ;`,
+            `  const $lib = {};`,
+            `  (declare => { ${plainLib} })((name, callback) => { $lib[name] = callback; });`,
             `  window.$injector_${varName}_run = true;`,
             `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
             plainPrelude,
@@ -92,10 +103,14 @@ function inject(tabId, tab, plainPrelude, script, varName, scriptName) {
 
 // Load required resources first
 Promise.all([
+    fetchInternal("./lib.js"),
     fetchInternal("../defaults/prelude.js"),
     fetchInternal("../defaults/generic.js"),
     fetchInternal("../defaults/domain.js"),
-]).then(([DEFAULT_PRELUDE, DEFAULT_GENERIC, DEFAULT_DOMAIN_SCRIPT]) => {
+]).then(([LIB, DEFAULT_PRELUDE, DEFAULT_GENERIC, DEFAULT_DOMAIN_SCRIPT]) => {
+    // Decompress the library
+    const plainLib = decompress(LIB)
+
     // Run a handler when the active tab changes
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (!tab.url) {
@@ -132,6 +147,7 @@ Promise.all([
             inject(
                 tabId,
                 tab,
+                plainLib,
                 prelude,
                 decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
                 "generic",
@@ -155,6 +171,7 @@ Promise.all([
             inject(
                 tabId,
                 tab,
+                plainLib,
                 prelude,
                 decompress(domainScript),
                 "domainScript",
