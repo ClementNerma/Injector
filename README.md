@@ -2,6 +2,8 @@
 
 _Injector_ is a Chromium extension that allow you to inject a JavaScript code into specific websites.
 
+It is written in JavaScript since it allows to instant reloading and no toolchain (unlike TypeScript). Besides, the extension's structure would be a lot more complicated to deal with in TypeScript or functional languages like Elm or PureScript, due to internal resources fetching and dealing with maybe-unitialized values.
+
 ## How does it work?
 
 1. Go to the website you want to always run a script on
