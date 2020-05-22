@@ -69,9 +69,12 @@ function load(domain) {
             editor.session.setValue(code)
         }
 
+        let isDefault = true
+
         if (scripts[domain] !== undefined) {
             setContent(scripts[domain])
             editor.gotoLine(Infinity, Infinity)
+            isDefault = false
         } else if (domain === "<prelude>") {
             setContent(DEFAULT_PRELUDE)
         } else if (domain === "<generic>") {
@@ -86,7 +89,7 @@ function load(domain) {
         editor.focus()
 
         console.debug("Loaded script for domain: " + domain)
-        setStatus("✔️", "Loaded saved script")
+        setStatus("✔️" + (isDefault ? "🗑️" : ""), "Loaded saved script")
 
         toolsBtn.innerHTML = "🛠️"
         openableToolbox = true
