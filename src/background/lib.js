@@ -86,21 +86,34 @@ declare("remove", (selector) => $lib.q(selector)?.remove())
 declare("removeAll", (selector) => $lib.qa(selector).forEach((el) => el.remove()))
 
 // CLick an element once it appears
-declare("clickReady", (selector) => $lib.waitFor(selector, (el) => el.click()))
+declare("clickReady", (selector, callback) =>
+    $lib.waitFor(selector, (el) => {
+        el.click()
+        callback?.()
+    })
+)
 
 // Remove an element when it appears
-declare("removeReady", (selector) => $lib.waitFor(selector, (el) => el.remove()))
+declare("removeReady", (selector, callback) =>
+    $lib.waitFor(selector, (el) => {
+        el.remove()
+        callback?.()
+    })
+)
 
 // Hide an element and remove it when it appears
-declare("hideAndRemove", (selector) => {
+declare("hideAndRemove", (selector, callback) => {
     $lib.hide(selector)
-    $lib.removeReady(selector)
+    $lib.removeReady(selecto, callbackr)
 })
 
 // Hide and remove all elements matching a selector when they are appear (the first time only)
-declare("hideAndRemoveAll", (selector) => {
+declare("hideAndRemoveAll", (selector, callback) => {
     $lib.hide(selector)
-    $lib.waitFor(selector, (_) => removeAll(selector))
+    $lib.waitFor(selector, (_) => {
+        removeAll(selector)
+        callback?.()
+    })
 })
 
 // Hide and remove all elements matching a selector when they are appear
