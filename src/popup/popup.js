@@ -253,7 +253,7 @@ function saveDomainScript(domain, code) {
                 reject(["❌", errMsg])
             } else {
                 console.debug(
-                    code.length === 0
+                    action === "remove"
                         ? `[${domain}] Removed script from storage`
                         : `[${domain}] Saved script to storage (${(
                               content.length / 1024
