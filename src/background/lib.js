@@ -46,7 +46,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
         if (!target) {
             if (isDomReady && Date.now() - started >= delayAfterDomReady) {
                 console.debug(
-                    `Dropping waitFor() with selector "${selector}" after delay (${delayAfterDomReady} ms) is expired.`
+                    `[Injector] Dropping waitFor() with selector "${selector}" after delay (${delayAfterDomReady} ms) is expired.`
                 )
                 clearInterval(waiter)
             }
