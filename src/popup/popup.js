@@ -162,7 +162,7 @@ function onChange() {
  * @returns {Promise} Code is processed in parallel
  */
 function computeSaving(domain, code) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         // Don't save empty scripts
         if (code.length === 0) {
             return resolve({
