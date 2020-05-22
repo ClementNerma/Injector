@@ -59,7 +59,7 @@ function decompress(content) {
  * @param {string} plainPrelude The decompressed prelude
  * @param {string} script The compressed script
  * @param {string} varName The script's variable-compliant name (e.g. "domainScript")
- * @param {script} scriptName The script's name (e.g. "domain script")
+ * @param {script} scriptName The script's name ("<generic>" or URL of the domain script)
  */
 function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName) {
     // Determine if the script is immediate
@@ -74,7 +74,9 @@ function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName)
             `  const libProxy = new Proxy($lib, { get(obj, key) { return obj[key]; } });`,
             `  ((declare, $lib) => { ${plainLib} })((name, value) => { $lib[name] = value; }, libProxy);`,
             `  window.$injector_${varName}_run = true;`,
-            `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
+            `  console.debug("[Injector] Running ${
+                scriptName === "<generic>" ? "the generic" : `domain script '${scriptName}'`
+            } on page: " + __tab.url);`,
             plainPrelude,
             script,
             `\n;})(${JSON.stringify(tab)})` +
@@ -137,7 +139,7 @@ Promise.all([
                 prelude,
                 decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
                 "generic",
-                "generic"
+                "<generic>"
             )
 
             // Get the domain script
@@ -161,7 +163,7 @@ Promise.all([
                 prelude,
                 decompress(domainScript),
                 "domainScript",
-                "domain script"
+                domain
             )
         })
     })
