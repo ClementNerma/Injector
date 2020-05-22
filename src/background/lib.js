@@ -26,7 +26,7 @@ declare("css", (css) => {
 })
 
 // Watch for an element to appear
-declare("waitFor", (selector, callback, delayAfterDomReady = 10000, refresh = 10) => {
+declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10) => {
     const init = $lib.q(selector)
 
     if (init) {
