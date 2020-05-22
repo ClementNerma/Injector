@@ -1,5 +1,10 @@
 # Changelog
 
+### Version 1.7 (22-05-2020)
+
+-   Script functions are now asynchronous
+-   Handle errors in scripts by pretty-displaying them
+
 ### Version 1.6 (17-05-2020)
 
 -   Introduce the library to avoid breaking changes and/or lack of update if the default prelude has been changed

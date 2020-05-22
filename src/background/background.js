@@ -68,7 +68,7 @@ function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName)
     if (isImmediate || tab.status === "complete") {
         // Prepare the code to inject in the current tab
         const code = [
-            `;(function injector_domain_script(__tab) {`,
+            `;(async function injector_domain_script(__tab) {`,
             `  if ("$injector_${varName}_run" in window) return ;`,
             `  const $lib = {};`,
             `  const libProxy = new Proxy($lib, { get(obj, key) { return obj[key]; } });`,
@@ -77,7 +77,8 @@ function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName)
             `  console.debug("[Injector] Running ${scriptName}: " + __tab.url);`,
             plainPrelude,
             script,
-            `\n;})(${JSON.stringify(tab)});`,
+            `\n;})(${JSON.stringify(tab)})` +
+                `.catch(err => console.error('Injector script "${scriptName}" encountered an error:\\n', err));`,
         ].join("")
 
         // Inject it
