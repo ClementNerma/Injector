@@ -73,6 +73,9 @@ declare("removeAll", (selector) =>
     $lib.qa(selector).forEach((el) => el.remove())
 )
 
+// CLick an element once it appears
+declare("clickReady", (selector) => $lib.waitFor(selector, (el) => el.click()))
+
 // Remove an element when it appears
 declare("removeReady", (selector) =>
     $lib.waitFor(selector, (el) => el.remove())

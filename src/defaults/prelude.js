@@ -12,6 +12,7 @@ const {
     hide,
     remove,
     removeAll,
+    clickReady,
     removeReady,
     hideAndRemove,
     hideAndRemoveAll,
