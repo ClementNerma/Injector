@@ -6,6 +6,9 @@ window.addEventListener("load", () => {
     isDomReady = true
 })
 
+// Count waitFor() requests
+let waitForReq = 0
+
 // Select an element using a CSS selector
 declare("q", (selector) => document.querySelector(selector))
 
@@ -27,12 +30,22 @@ declare("css", (css) => {
 
 // Watch for an element to appear
 declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10) => {
+    const id = (++waitForReq).toString().padStart(3, "0")
+
     const init = $lib.q(selector)
 
     if (init) {
+        console.debug(
+            `[Injector] [waitFor:${id}] Instantly found element with selector "${selector}"`
+        )
+
         callback(init, 0)
         return
     }
+
+    console.debug(
+        `[Injector] [waitFor:${id}] Waiting for element with selector "${selector}" (timeout: ${delayAfterDomReady} ms after DOM is ready)`
+    )
 
     let started = null
 
@@ -46,7 +59,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
         if (!target) {
             if (isDomReady && Date.now() - started >= delayAfterDomReady) {
                 console.debug(
-                    `[Injector] Dropping waitFor() with selector "${selector}" after delay (${delayAfterDomReady} ms) is expired.`
+                    `[Injector] [waitFor:${id}] Dropping request with selector "${selector}" due to timeout.`
                 )
                 clearInterval(waiter)
             }
@@ -55,6 +68,10 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
         }
 
         clearInterval(waiter)
+
+        console.debug(
+            `[Injector] [waitFor:${id}] Found requested element with selector "${selector}".`
+        )
         callback(target, Date.now() - started)
     }, refresh)
 })
