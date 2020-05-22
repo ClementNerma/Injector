@@ -168,7 +168,7 @@ function computeSaving(domain, code) {
             return resolve({
                 action: "remove",
                 status: [
-                    "✔️",
+                    "✔️🗑️",
                     `Saved changes (removed script from storage since it is empty)`,
                 ],
             })
@@ -185,7 +185,7 @@ function computeSaving(domain, code) {
             resolve({
                 action: "remove",
                 status: [
-                    "✔️",
+                    "✔️🗑️",
                     `Saved changes (removed script from storage since it is equivalent to the default script)`,
                 ],
             })
