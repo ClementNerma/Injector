@@ -26,41 +26,38 @@ declare("css", (css) => {
 })
 
 // Watch for an element to appear
-declare(
-    "waitFor",
-    (selector, callback, delayAfterDomReady = 10000, refresh = 10) => {
-        const init = $lib.q(selector)
+declare("waitFor", (selector, callback, delayAfterDomReady = 10000, refresh = 10) => {
+    const init = $lib.q(selector)
 
-        if (init) {
-            callback(init, 0)
+    if (init) {
+        callback(init, 0)
+        return
+    }
+
+    let started = null
+
+    const waiter = setInterval(() => {
+        const target = $lib.q(selector)
+
+        if (!started && isDomReady) {
+            started = Date.now()
+        }
+
+        if (!target) {
+            if (isDomReady && Date.now() - started >= delayAfterDomReady) {
+                console.debug(
+                    `Dropping waitFor() after delay (${delayAfterDomReady} ms) is expired.`
+                )
+                clearInterval(waiter)
+            }
+
             return
         }
 
-        let started = null
-
-        const waiter = setInterval(() => {
-            const target = $lib.q(selector)
-
-            if (!started && isDomReady) {
-                started = Date.now()
-            }
-
-            if (!target) {
-                if (isDomReady && Date.now() - started >= delayAfterDomReady) {
-                    console.debug(
-                        `Dropping waitFor() after delay (${delayAfterDomReady} ms) is expired.`
-                    )
-                    clearInterval(waiter)
-                }
-
-                return
-            }
-
-            clearInterval(waiter)
-            callback(target, Date.now() - started)
-        }, refresh)
-    }
-)
+        clearInterval(waiter)
+        callback(target, Date.now() - started)
+    }, refresh)
+})
 
 // Hide an element
 declare("hide", (selector) => $lib.css(`${selector} { display: none; }`))
@@ -69,17 +66,13 @@ declare("hide", (selector) => $lib.css(`${selector} { display: none; }`))
 declare("remove", (selector) => $lib.q(selector)?.remove())
 
 // Remove all elements matching a selector
-declare("removeAll", (selector) =>
-    $lib.qa(selector).forEach((el) => el.remove())
-)
+declare("removeAll", (selector) => $lib.qa(selector).forEach((el) => el.remove()))
 
 // CLick an element once it appears
 declare("clickReady", (selector) => $lib.waitFor(selector, (el) => el.click()))
 
 // Remove an element when it appears
-declare("removeReady", (selector) =>
-    $lib.waitFor(selector, (el) => el.remove())
-)
+declare("removeReady", (selector) => $lib.waitFor(selector, (el) => el.remove()))
 
 // Hide an element and remove it when it appears
 declare("hideAndRemove", (selector) => {

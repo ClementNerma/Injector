@@ -1,104 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Injector</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Injector</title>
 
-    <style type="text/css">
-        #domain-selector {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            min-height: 20px;
-            height: 20px;
-            max-height: 20px;
-            width: 100%;
-            z-index: 1;
-        }
+        <style type="text/css">
+            #domain-selector {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                min-height: 20px;
+                height: 20px;
+                max-height: 20px;
+                width: 100%;
+                z-index: 1;
+            }
 
-        #editor {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 1;
-        }
+            #editor {
+                position: absolute;
+                top: 20px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
 
-        #toolbox {
-            position: absolute;
-            top: 20%;
-            left: 20%;
-            right: 20%;
-            bottom: 20%;
-            /*box-shadow: black 5px 5px;*/
-            background-color: white;
-            padding-top: 5px;
-            padding-bottom: 5px;
-            display: none;
-            z-index: 2;
-        }
+            #toolbox {
+                position: absolute;
+                top: 20%;
+                left: 20%;
+                right: 20%;
+                bottom: 20%;
+                /*box-shadow: black 5px 5px;*/
+                background-color: white;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                display: none;
+                z-index: 2;
+            }
 
-        #toolbox.opened {
-            display: block;
-        }
+            #toolbox.opened {
+                display: block;
+            }
 
-        #toolbox > button {
-            display: block;
-            font-size: 14px;
-            padding: 5px;
-            color: #1fadf0;
-            background-color: transparent;
-            border: none;
-            outline: none;
-            text-decoration: underline;
-            cursor: pointer;
-        }
+            #toolbox > button {
+                display: block;
+                font-size: 14px;
+                padding: 5px;
+                color: #1fadf0;
+                background-color: transparent;
+                border: none;
+                outline: none;
+                text-decoration: underline;
+                cursor: pointer;
+            }
 
-        #tools {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            font-size: 17px;
-            padding: 5px;
-            background-color: transparent;
-            z-index: 999;
-            cursor: default;
-        }
-    
-        #status {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            font-size: 17px;
-            padding: 5px;
-            background-color: gray;
-            z-index: 999;
-            cursor: default;
-        }
-    </style>
-</head>
-<body>
-    <!-- Domain selector -->
-    <select id="domain-selector"></select>
+            #tools {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                font-size: 17px;
+                padding: 5px;
+                background-color: transparent;
+                z-index: 999;
+                cursor: default;
+            }
 
-    <!-- Code editor -->
-    <div id="editor"></div>
+            #status {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                font-size: 17px;
+                padding: 5px;
+                background-color: gray;
+                z-index: 999;
+                cursor: default;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Domain selector -->
+        <select id="domain-selector"></select>
 
-    <!-- Toolbox -->
-    <div id="toolbox"></div>
+        <!-- Code editor -->
+        <div id="editor"></div>
 
-    <!-- Tools icon -->
-    <div id="tools"></div>
+        <!-- Toolbox -->
+        <div id="toolbox"></div>
 
-    <!-- Status icon -->
-    <div id="status"></div>
+        <!-- Tools icon -->
+        <div id="tools"></div>
 
-    <script type="text/javascript" src="resize-popup.js"></script>
-    <script type="text/javascript" src="../libs/acejs-min/ace.js"></script>
-    <script type="text/javascript" src="../libs/lz-string.min.js"></script>
-    <script type="text/javascript" src="popup.js"></script>
-</body>
+        <!-- Status icon -->
+        <div id="status"></div>
+
+        <script type="text/javascript" src="resize-popup.js"></script>
+        <script type="text/javascript" src="../libs/acejs-min/ace.js"></script>
+        <script type="text/javascript" src="../libs/lz-string.min.js"></script>
+        <script type="text/javascript" src="popup.js"></script>
+    </body>
 </html>

@@ -21,9 +21,7 @@ function fetchInternal(uri) {
                     .text()
                     .then((text) => {
                         const size = (text.length / 1024).toFixed(2)
-                        console.debug(
-                            `Successfully loaded internal URI '${uri}' (${size} Kb)`
-                        )
+                        console.debug(`Successfully loaded internal URI '${uri}' (${size} Kb)`)
                         resolve(text)
                     })
                     .catch(() => {
@@ -50,9 +48,7 @@ function decompress(content) {
         return content
     }
 
-    return LZString.decompressFromUTF16(
-        content.substr(COMPRESSION_HEADER.length)
-    )
+    return LZString.decompressFromUTF16(content.substr(COMPRESSION_HEADER.length))
 }
 
 /**
@@ -65,15 +61,7 @@ function decompress(content) {
  * @param {string} varName The script's variable-compliant name (e.g. "domainScript")
  * @param {script} scriptName The script's name (e.g. "domain script")
  */
-function inject(
-    tabId,
-    tab,
-    plainLib,
-    plainPrelude,
-    script,
-    varName,
-    scriptName
-) {
+function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName) {
     // Determine if the script is immediate
     const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/)
 
@@ -115,9 +103,7 @@ Promise.all([
     // Run a handler when the active tab changes
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (!tab.url) {
-            console.debug(
-                "Encountered tab without URL (probably a browser internal page)"
-            )
+            console.debug("Encountered tab without URL (probably a browser internal page)")
             return
         }
 
@@ -131,9 +117,7 @@ Promise.all([
         }
 
         if (!SUPPORTED_PROTOCOLS.includes(_domain[1])) {
-            console.debug(
-                `Ignoring script injection for unsupported protocol "${_domain[1]}"`
-            )
+            console.debug(`Ignoring script injection for unsupported protocol "${_domain[1]}"`)
             return
         }
 

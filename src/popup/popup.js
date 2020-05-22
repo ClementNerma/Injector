@@ -192,9 +192,7 @@ function computeSaving(domain, code) {
         }
 
         console.debug(
-            `[${domain}] Compressing code (${(code.length / 1024).toFixed(
-                2
-            )}) Kb...`
+            `[${domain}] Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`
         )
 
         const compressed = COMPRESSION_HEADER + LZString.compressToUTF16(code)
@@ -223,9 +221,7 @@ function computeSaving(domain, code) {
                       content: compressed,
                       status: [
                           "✔️📦",
-                          `Saved changes (${sizeInKB(
-                              code.length
-                          )} plain, ${sizeInKB(
+                          `Saved changes (${sizeInKB(code.length)} plain, ${sizeInKB(
                               compressed.length
                           )} compressed, ratio = ${ratio}`,
                       ],
@@ -234,10 +230,7 @@ function computeSaving(domain, code) {
                   {
                       action: "save",
                       content: code,
-                      status: [
-                          "✔️",
-                          `Saved changes (${sizeInKB(code.length)})`,
-                      ],
+                      status: ["✔️", `Saved changes (${sizeInKB(code.length)})`],
                   }
         )
     })
@@ -255,10 +248,7 @@ function saveDomainScript(domain, code) {
             if (chrome.runtime.lastError) {
                 const errMsg = `Failed to save changes: ${chrome.runtime.lastError.message}`
 
-                console.error(
-                    `[${domain}] Failed to save changes`,
-                    chrome.runtime.lastError
-                )
+                console.error(`[${domain}] Failed to save changes`, chrome.runtime.lastError)
 
                 reject(["❌", errMsg])
             } else {
@@ -274,17 +264,12 @@ function saveDomainScript(domain, code) {
             }
         }
 
-        const { action, content, status } = await computeSaving(
-            selectedDomain,
-            code
-        )
+        const { action, content, status } = await computeSaving(selectedDomain, code)
 
         if (action === "remove") {
             chrome.storage.sync.remove(selectedDomain, callback)
         } else {
-            chrome.storage.sync.set({ [selectedDomain]: content }, () =>
-                callback()
-            )
+            chrome.storage.sync.set({ [selectedDomain]: content }, () => callback())
         }
     })
 }
@@ -374,10 +359,7 @@ function openTools() {
                             ? `Failed to read the text file`
                             : "Unknown error"
 
-                    return reject([
-                        `${errMsg} (${err[1]?.message ?? "no details"})`,
-                        err,
-                    ])
+                    return reject([`${errMsg} (${err[1]?.message ?? "no details"})`, err])
                 }
 
                 editor.setValue(text)
@@ -409,10 +391,7 @@ function openTools() {
                             : err[1] === "read"
                             ? `Failed to read the text file`
                             : "Unknown error"
-                    return reject([
-                        `${errMsg} (${err[1]?.message ?? "no details"})`,
-                        err,
-                    ])
+                    return reject([`${errMsg} (${err[1]?.message ?? "no details"})`, err])
                 }
 
                 let json
@@ -426,17 +405,10 @@ function openTools() {
                 try {
                     await importAll(json)
                 } catch (err) {
-                    const delError = err.delError
-                        ? ` (${err.delError.message})`
-                        : ""
-                    const saveError = err.saveError
-                        ? ` (${err.saveError.message})`
-                        : ""
+                    const delError = err.delError ? ` (${err.delError.message})` : ""
+                    const saveError = err.saveError ? ` (${err.saveError.message})` : ""
 
-                    return reject([
-                        `Failed to import all scripts` + delError + saveError,
-                        err,
-                    ])
+                    return reject([`Failed to import all scripts` + delError + saveError, err])
                 }
 
                 alert(
@@ -446,9 +418,7 @@ function openTools() {
                         "This popup will now be closed in order to reload all domain informations."
                 )
 
-                console.debug(
-                    "Now closing after importing scripts from a JSON file..."
-                )
+                console.debug("Now closing after importing scripts from a JSON file...")
 
                 window.close()
             },
@@ -643,13 +613,9 @@ function decompress(content) {
         return content
     }
 
-    console.debug(
-        `Decompressing ${(content.length / 1024).toFixed(2)} Kb of data...`
-    )
+    console.debug(`Decompressing ${(content.length / 1024).toFixed(2)} Kb of data...`)
 
-    let decompressed = LZString.decompressFromUTF16(
-        content.substr(COMPRESSION_HEADER.length)
-    )
+    let decompressed = LZString.decompressFromUTF16(content.substr(COMPRESSION_HEADER.length))
 
     console.debug("Done!")
 
@@ -705,9 +671,7 @@ async function importAll(scripts) {
  * @returns {Promise} Once the export is complete
  */
 async function exportAll() {
-    const scripts = await new Promise((resolve) =>
-        chrome.storage.sync.get(null, resolve)
-    )
+    const scripts = await new Promise((resolve) => chrome.storage.sync.get(null, resolve))
 
     const exportable = {}
 
@@ -727,23 +691,17 @@ function startup() {
     // Parse the domain & load saved data for this domain
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         // Parse the domain
-        const match = tabs[0].url.match(
-            /^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/
-        )
+        const match = tabs[0].url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/)
 
         if (!match) {
-            return loadingError(
-                `Failed to parse domain name for URL: ${tabs[0].url}`
-            )
+            return loadingError(`Failed to parse domain name for URL: ${tabs[0].url}`)
         }
 
         if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
             return loadingError(
                 `Unsupported protocol "${
                     match[1]
-                }".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(
-                    ", "
-                )}.`
+                }".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(", ")}.`
             )
         }
 
@@ -754,11 +712,7 @@ function startup() {
         tabId = tabs[0].id
 
         // Fetch default scripts
-        let [
-            defaultPrelude,
-            defaultGeneric,
-            defaultDomainScript,
-        ] = await Promise.all([
+        let [defaultPrelude, defaultGeneric, defaultDomainScript] = await Promise.all([
             startupFetchInternal("../defaults/prelude.js"),
             startupFetchInternal("../defaults/generic.js"),
             startupFetchInternal("../defaults/domain.js"),
@@ -806,11 +760,7 @@ function startup() {
 
             // Listen to domain selection
             selector.addEventListener("change", () => {
-                load(
-                    selector.options[selector.selectedIndex].getAttribute(
-                        "value"
-                    )
-                )
+                load(selector.options[selector.selectedIndex].getAttribute("value"))
             })
 
             editor.session.setMode("ace/mode/javascript")
