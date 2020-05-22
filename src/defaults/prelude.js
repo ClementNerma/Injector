@@ -22,4 +22,6 @@ const {
     onLoad,
     queryp,
     loc,
+    promisify,
+    promisifyMulti,
 } = $lib

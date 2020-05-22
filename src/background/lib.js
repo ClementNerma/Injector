@@ -149,3 +149,13 @@ declare("loc", window.location)
 
 // Get the current URL's query parameters and/or update it
 declare("queryp", new URLSearchParams(window.location.search))
+
+// Transform a function taking a callback to a function returning a promise
+declare("promisify", (f, ...args) => new Promise((resolve) => f(...args, resolve)))
+
+// As "promisify" only returns the first argument provided to the callback,
+// this function returns a promise resolving with an array of arguments
+declare(
+    "promisifyMulti",
+    (f, ...args) => new Promise((resolve) => f(...args, (...args) => resolve(args)))
+)
