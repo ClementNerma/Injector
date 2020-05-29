@@ -159,3 +159,48 @@ declare(
     "promisifyMulti",
     (f, ...args) => new Promise((resolve) => f(...args, (...args) => resolve(args)))
 )
+
+// Run a function at a provided interval
+// The function won't be run if another instance is running
+// The callback receives a "stop" function argument that allows to stop the loop
+// If a function returns a promise, the function is not considered finishes until the promise either resolves or rejects
+// This function returns the return value of setInterval()
+declare(
+    "loop",
+    (
+        f,
+        interval = 100,
+        { waitPromise, noClash, runClashAfterExit } = {
+            waitPromise: true,
+            noClash: true,
+            runClashAfterExit: true,
+        }
+    ) => {
+        let running = false
+
+        function _cycle() {
+            if (running && noClash) return
+
+            running = true
+
+            const ret = f(() => clearInterval(int))
+
+            if (!(ret instanceof Promise) || !waitPromise) {
+                running = false
+            } else {
+                ret.then(() => {
+                    running = false
+                    if (runClashAfterExit) _cycle()
+                })
+                ret.catch(() => {
+                    running = false
+                    if (runClashAfterExit) _cycle()
+                })
+            }
+        }
+
+        // MUST NOT be optimized to `return setInterval(...)` as the `int` variable is used in the `_cycle()` callback
+        const int = setInterval(() => _cycle(), interval)
+        return int
+    }
+)
