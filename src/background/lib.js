@@ -1,9 +1,15 @@
 "use strict"
 
 // Track if DOM is ready
-let isDomReady = false
+let isDOMReady = false
+window.addEventListener("DOMContentLoaded", () => {
+    isDOMReady = true
+})
+
+// Track if DOM + resources are ready
+let isPageReady = false
 window.addEventListener("load", () => {
-    isDomReady = true
+    isPageReady = true
 })
 
 // Count waitFor() requests
@@ -52,12 +58,12 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
     const waiter = setInterval(() => {
         const target = $lib.q(selector)
 
-        if (!started && isDomReady) {
+        if (!started && isPageReady) {
             started = Date.now()
         }
 
         if (!target) {
-            if (isDomReady && Date.now() - started >= delayAfterDomReady) {
+            if (isPageReady && Date.now() - started >= delayAfterDomReady) {
                 console.debug(
                     `[Injector] [waitFor:${id}] Dropping request with selector "${selector}" due to timeout.`
                 )
@@ -133,16 +139,28 @@ declare("matchRegex", (str, regex, callback) => {
     return match ? callback(match) : null
 })
 
-// Run a command when the document is fully loaded
+// Wait for the DOM to be ready
+// Useful for immediate scripts that require the DOM to be ready but do not want to wait for resources like images
+declare(
+    "domReady",
+    () =>
+        new Promise((resolve) =>
+            isDOMReady
+                ? resolve()
+                : window.addEventListener("DOMContentLoaded", () => resolve())
+        )
+)
+
+// Wait for the document to be fully loaded
 // Useful for immediate scripts that also want to run another function
 //  only after the DOM is ready
-declare("onLoad", (callback) => {
-    if (isDomReady) {
-        callback()
-    } else {
-        window.addEventListener("load", () => callback())
-    }
-})
+declare(
+    "pageReady",
+    () =>
+        new Promise((resolve) =>
+            isPageReady ? resolve() : window.addEventListener("load", () => callback())
+        )
+)
 
 // Get informations on the current URL
 declare("loc", window.location)

@@ -40,6 +40,13 @@ By default, scripts are run when a tab finishes to load. In order to make the sc
 
 Note that this comment does not have any effect on the prelude script.
 
+It's also possible to run the script only when the tab loaded its DOM tree but not resources like images yet:
+
+```js
+//#immediate
+await domReady()
+```
+
 ## Synchronization
 
 Your scripts are synchronized between all computers through your Google account thanks to the [`chrome.storage.sync`](https://developer.chrome.com/extensions/storage) API.
