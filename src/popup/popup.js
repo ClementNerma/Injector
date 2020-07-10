@@ -113,11 +113,7 @@ function loadingError(msg) {
 }
 
 // Ensure Chrome APIs are available
-if (
-    typeof chrome === "undefined" ||
-    typeof chrome.tabs === "undefined" ||
-    typeof chrome.storage === "undefined"
-) {
+if (typeof chrome === "undefined" || typeof chrome.tabs === "undefined" || typeof chrome.storage === "undefined") {
     loadingError("Chrome APIs are not available")
     throw new Error("Chrome APIs are not available")
 }
@@ -170,10 +166,7 @@ function computeSaving(domain, code) {
         if (code.length === 0) {
             return resolve({
                 action: "remove",
-                status: [
-                    "✔️🗑️",
-                    `Saved changes (removed script from storage since it is empty)`,
-                ],
+                status: ["✔️🗑️", `Saved changes (removed script from storage since it is empty)`],
             })
         }
 
@@ -181,33 +174,22 @@ function computeSaving(domain, code) {
         if (
             (domain === "<prelude>" && code === DEFAULT_PRELUDE) ||
             (domain === "<generic>" && code === DEFAULT_GENERIC) ||
-            (domain !== "<prelude>" &&
-                domain !== "<generic>" &&
-                code === DEFAULT_DOMAIN_SCRIPT)
+            (domain !== "<prelude>" && domain !== "<generic>" && code === DEFAULT_DOMAIN_SCRIPT)
         ) {
             resolve({
                 action: "remove",
-                status: [
-                    "✔️🗑️",
-                    `Saved changes (removed script from storage since it is equivalent to the default script)`,
-                ],
+                status: ["✔️🗑️", `Saved changes (removed script from storage since it is equivalent to the default script)`],
             })
         }
 
-        console.debug(
-            `[${domain}] Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`
-        )
+        console.debug(`[${domain}] Compressing code (${(code.length / 1024).toFixed(2)}) Kb...`)
 
         const compressed = COMPRESSION_HEADER + LZString.compressToUTF16(code)
 
         // No worry about a potential division by zero here as a non-empty code cannot be empty once compressed
         const ratio = (code.length / compressed.length).toFixed(1)
 
-        console.debug(
-            `[${domain}] Compressed to ${(code.length / 1024).toFixed(
-                2
-            )} Kb (ratio = ${ratio})`
-        )
+        console.debug(`[${domain}] Compressed to ${(code.length / 1024).toFixed(2)} Kb (ratio = ${ratio})`)
 
         if (ratio < 1) {
             console.debug(
@@ -258,9 +240,7 @@ function saveDomainScript(domain, code) {
                 console.debug(
                     action === "remove"
                         ? `[${domain}] Removed script from storage`
-                        : `[${domain}] Saved script to storage (${(
-                              content.length / 1024
-                          ).toFixed(2)} Kb)`
+                        : `[${domain}] Saved script to storage (${(content.length / 1024).toFixed(2)} Kb)`
                 )
 
                 resolve(status)
@@ -308,9 +288,7 @@ let isToolboxOpened = false
  */
 function openTools() {
     if (!openableToolbox) {
-        alert(
-            "The toolbox cannot be opened while a domain script is loading or failed to load."
-        )
+        alert("The toolbox cannot be opened while a domain script is loading or failed to load.")
         return
     }
 
@@ -415,9 +393,7 @@ function openTools() {
                 }
 
                 alert(
-                    `All ${
-                        Reflect.ownKeys(json).length
-                    } scripts were imported successfully!\n` +
+                    `All ${Reflect.ownKeys(json).length} scripts were imported successfully!\n` +
                         "This popup will now be closed in order to reload all domain informations."
                 )
 
@@ -498,11 +474,7 @@ function startupFetchInternal(uri) {
                 response
                     .text()
                     .then((text) => resolve(text))
-                    .catch(() =>
-                        loadingError(
-                            `Failed to decode text response from internal URI '${uri}'`
-                        )
-                    )
+                    .catch(() => loadingError(`Failed to decode text response from internal URI '${uri}'`))
             )
             .catch(() => loadingError(`Failed to fetch internal URI '${uri}'`))
     })
@@ -702,9 +674,7 @@ function startup() {
 
         if (!SUPPORTED_PROTOCOLS.includes(match[1].toLocaleLowerCase())) {
             return loadingError(
-                `Unsupported protocol "${
-                    match[1]
-                }".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(", ")}.`
+                `Unsupported protocol "${match[1]}".\nSupported protocols are: ${SUPPORTED_PROTOCOLS.join(", ")}.`
             )
         }
 
@@ -749,11 +719,7 @@ function startup() {
 
             // All other domains, sorted by name
             for (const otherDomain of savedDomains.sort()) {
-                if (
-                    otherDomain !== currentDomain &&
-                    otherDomain !== "<prelude>" &&
-                    otherDomain !== "<generic>"
-                ) {
+                if (otherDomain !== currentDomain && otherDomain !== "<prelude>" && otherDomain !== "<generic>") {
                     addChoice(otherDomain)
                 }
             }

@@ -41,9 +41,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
     const init = $lib.q(selector)
 
     if (init) {
-        console.debug(
-            `[Injector] [waitFor:${id}] Instantly found element with selector "${selector}"`
-        )
+        console.debug(`[Injector] [waitFor:${id}] Instantly found element with selector "${selector}"`)
 
         callback(init, 0)
         return
@@ -64,9 +62,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
 
         if (!target) {
             if (isPageReady && Date.now() - started >= delayAfterDomReady) {
-                console.debug(
-                    `[Injector] [waitFor:${id}] Dropping request with selector "${selector}" due to timeout.`
-                )
+                console.debug(`[Injector] [waitFor:${id}] Dropping request with selector "${selector}" due to timeout.`)
                 clearInterval(waiter)
             }
 
@@ -75,9 +71,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
 
         clearInterval(waiter)
 
-        console.debug(
-            `[Injector] [waitFor:${id}] Found requested element with selector "${selector}".`
-        )
+        console.debug(`[Injector] [waitFor:${id}] Found requested element with selector "${selector}".`)
         callback(target, Date.now() - started)
     }, refresh)
 })
@@ -143,12 +137,7 @@ declare("matchRegex", (str, regex, callback) => {
 // Useful for immediate scripts that require the DOM to be ready but do not want to wait for resources like images
 declare(
     "domReady",
-    () =>
-        new Promise((resolve) =>
-            isDOMReady
-                ? resolve()
-                : window.addEventListener("DOMContentLoaded", () => resolve())
-        )
+    () => new Promise((resolve) => (isDOMReady ? resolve() : window.addEventListener("DOMContentLoaded", () => resolve())))
 )
 
 // Wait for the document to be fully loaded
@@ -156,10 +145,7 @@ declare(
 //  only after the DOM is ready
 declare(
     "pageReady",
-    () =>
-        new Promise((resolve) =>
-            isPageReady ? resolve() : window.addEventListener("load", () => callback())
-        )
+    () => new Promise((resolve) => (isPageReady ? resolve() : window.addEventListener("load", () => callback())))
 )
 
 // Get informations on the current URL
@@ -173,10 +159,7 @@ declare("promisify", (f, ...args) => new Promise((resolve) => f(...args, resolve
 
 // As "promisify" only returns the first argument provided to the callback,
 // this function returns a promise resolving with an array of arguments
-declare(
-    "promisifyMulti",
-    (f, ...args) => new Promise((resolve) => f(...args, (...args) => resolve(args)))
-)
+declare("promisifyMulti", (f, ...args) => new Promise((resolve) => f(...args, (...args) => resolve(args))))
 
 // Run a function at a provided interval
 // The function won't be run if another instance is running

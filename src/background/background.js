@@ -25,9 +25,7 @@ function fetchInternal(uri) {
                         resolve(text)
                     })
                     .catch(() => {
-                        console.error(
-                            `Failed to decode text response from internal URI '${uri}'`
-                        )
+                        console.error(`Failed to decode text response from internal URI '${uri}'`)
                         reject()
                     })
             )
@@ -113,9 +111,7 @@ Promise.all([
         const _domain = tab.url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/)
 
         if (!_domain) {
-            console.debug(
-                `Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`
-            )
+            console.debug(`Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`)
             return
         }
 
@@ -132,15 +128,7 @@ Promise.all([
             const prelude = decompress(scripts["<prelude>"] ?? DEFAULT_PRELUDE)
 
             // Inject the generic
-            inject(
-                tabId,
-                tab,
-                plainLib,
-                prelude,
-                decompress(scripts["<generic>"] ?? DEFAULT_GENERIC),
-                "generic",
-                "<generic>"
-            )
+            inject(tabId, tab, plainLib, prelude, decompress(scripts["<generic>"] ?? DEFAULT_GENERIC), "generic", "<generic>")
 
             // Get the domain script
             let domainScript
@@ -156,15 +144,7 @@ Promise.all([
             }
 
             // Inject it as well
-            inject(
-                tabId,
-                tab,
-                plainLib,
-                prelude,
-                decompress(domainScript),
-                "domainScript",
-                domain
-            )
+            inject(tabId, tab, plainLib, prelude, decompress(domainScript), "domainScript", domain)
         })
     })
 })
