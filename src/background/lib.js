@@ -104,7 +104,7 @@ declare("removeReady", (selector, callback) =>
 // Hide an element and remove it when it appears
 declare("hideAndRemove", (selector, callback) => {
     $lib.hide(selector)
-    $lib.removeReady(selecto, callbackr)
+    $lib.removeReady(selector, callback)
 })
 
 // Hide and remove all elements matching a selector when they are appear (the first time only)
