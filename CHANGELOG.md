@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 1.7.2 (25-09-2020)
+
+-   Don't run scripts if the `noinjector` query parameter is provided
+
 ### Version 1.7.1 (28-08-2020)
 
 -   Add function `createEl` to library

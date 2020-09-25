@@ -3,6 +3,11 @@
 // You may access informations about the current tab with the '__tab' constant
 // Also, many utility functions are provided through the '$lib' constant
 
+if ($lib.queryp.has("noinjector")) {
+    console.log("Injector scripts (domain + generic) disabled for this page")
+    return
+}
+
 const {
     q,
     qa,
