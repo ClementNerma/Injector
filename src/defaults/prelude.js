@@ -19,6 +19,8 @@ const {
     hideAndRemoveAllContinuously,
     parallel,
     matchRegex,
+    createEl,
+    download,
     domReady,
     pageReady,
     queryp,

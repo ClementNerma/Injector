@@ -1,5 +1,10 @@
 # Changelog
 
+### Version 1.7.1 (28-08-2020)
+
+-   Add function `createEl` to library
+-   Add function `download` to library
+
 ### Version 1.7 (22-05-2020)
 
 -   Script functions are now asynchronous

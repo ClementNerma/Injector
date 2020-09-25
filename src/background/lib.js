@@ -133,6 +133,51 @@ declare("matchRegex", (str, regex, callback) => {
     return match ? callback(match) : null
 })
 
+// Create a DOM element
+// Attributes is a key-value object, while 'content' is either an array of elements or an HTML string
+declare("createEl", (tagName, attributes, content, eventListeners) => {
+    const el = document.createElement(tagName)
+
+    if (attributes) {
+        for (const [name, value] of Object.entries(attributes)) {
+            el.setAttribute(name, value)
+        }
+    }
+
+    if (typeof content === "string") {
+        el.innerHTML = content
+    } else if (Array.isArray(content)) {
+        for (const child of content) {
+            el.appendChild(child)
+        }
+    } else if (content !== undefined && content !== null) {
+        throw new Error('Unsupported content type provided to "createEl" function')
+    }
+
+    if (eventListeners) {
+        for (const [eventName, listener] of Object.entries(eventListeners)) {
+            el.addEventListener(eventName, listener)
+        }
+    }
+
+    return el
+})
+
+// Download an in-memory buffer to a file
+declare("download", (text, filename = "file.txt", mimeType = "text/plain") => {
+    const blob = new Blob([text], { type: mimeType })
+    const url = window.URL.createObjectURL(blob)
+
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", filename)
+
+    link.click()
+
+    window.URL.revokeObjectURL(url)
+    link.remove()
+})
+
 // Wait for the DOM to be ready
 // Useful for immediate scripts that require the DOM to be ready but do not want to wait for resources like images
 declare(
