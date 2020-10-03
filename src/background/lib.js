@@ -77,7 +77,7 @@ declare("waitFor", (selector, callback, delayAfterDomReady = 4000, refresh = 10)
 })
 
 // Hide an element
-declare("hide", (selector) => $lib.css(`${selector} { display: none; }`))
+declare("hide", (selector) => $lib.css(`${selector} { display: none !important; }`))
 
 // Remove an element
 declare("remove", (selector) => $lib.q(selector)?.remove())

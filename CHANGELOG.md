@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 1.7.3 (03-10-2020)
+
+-   Make `hide` hide the provided selector with `display: none !important;` to ensure the rule is not overriden
+
 ### Version 1.7.2 (25-09-2020)
 
 -   Don't run scripts if the `noinjector` query parameter is provided
