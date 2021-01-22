@@ -60,35 +60,30 @@ function decompress(content) {
  * @param {script} scriptName The script's name ("<generic>" or URL of the domain script)
  */
 function inject(tabId, tab, plainLib, plainPrelude, script, varName, scriptName) {
-    // Determine if the script is immediate
-    const isImmediate = script.trim().match(/^\/\/\s*#immediate([\r\n]|$)/)
+    // Prepare the code to inject in the current tab
+    const code = [
+        `;(async function injector_domain_script(__tab) {`,
+        `  if ("$injector_${varName}_run" in window) return ;`,
+        `  const $lib = {};`,
+        `  const libProxy = new Proxy($lib, { get(obj, key) { return obj[key]; } });`,
+        `  ((declare, $lib) => { ${plainLib} })((name, value) => { $lib[name] = value; }, libProxy);`,
+        `  window.$injector_${varName}_run = true;`,
+        `  console.debug("[Injector] Running ${
+            scriptName === "<generic>" ? "the generic" : `domain script '${scriptName}'`
+        } on page: " + __tab.url);`,
+        plainPrelude,
+        script,
+        `\n;})(${JSON.stringify(tab)})` +
+            `.catch(err => console.error('Injector script "${scriptName}" encountered an error:\\n', err));`,
+    ].join("")
 
-    if (isImmediate || tab.status === "complete") {
-        // Prepare the code to inject in the current tab
-        const code = [
-            `;(async function injector_domain_script(__tab) {`,
-            `  if ("$injector_${varName}_run" in window) return ;`,
-            `  const $lib = {};`,
-            `  const libProxy = new Proxy($lib, { get(obj, key) { return obj[key]; } });`,
-            `  ((declare, $lib) => { ${plainLib} })((name, value) => { $lib[name] = value; }, libProxy);`,
-            `  window.$injector_${varName}_run = true;`,
-            `  console.debug("[Injector] Running ${
-                scriptName === "<generic>" ? "the generic" : `domain script '${scriptName}'`
-            } on page: " + __tab.url);`,
-            plainPrelude,
-            script,
-            `\n;})(${JSON.stringify(tab)})` +
-                `.catch(err => console.error('Injector script "${scriptName}" encountered an error:\\n', err));`,
-        ].join("")
+    // Inject it
+    chrome.tabs.executeScript(tabId, {
+        code,
+        runAt: "document_start",
+    })
 
-        // Inject it
-        chrome.tabs.executeScript(tabId, {
-            code,
-            runAt: isImmediate ? "document_start" : "document_idle",
-        })
-
-        console.debug(`Injected ${scriptName} in a tab`)
-    }
+    console.debug(`Injected ${scriptName} in a tab`)
 }
 
 // Load required resources first

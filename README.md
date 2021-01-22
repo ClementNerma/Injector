@@ -28,22 +28,19 @@ The _generic_ script is executed on every domain. It can be accessed through the
 
 Note that the prelude is inserted before the generic as well.
 
-The generic is injected in the page before the domain script if both have the same immediatety (you can use `// #immediate` on the generic).
+The generic is injected in the page before the domain script.
 
-## Immediate scripts
+## Non-immediate scripts
 
-By default, scripts are run when a tab finishes to load. In order to make the script as soon as the tab starts to load (for instance in order to inject styles in the page), the following comment must be written at the very beginning of the script:
+By default, scripts are run as soon as tab starts to load. In order to make the script run when the tab has completely finished loading, start your script by:
 
 ```js
-//#immediate
+await pageReady()
 ```
 
-Note that this comment does not have any effect on the prelude script.
-
-It's also possible to run the script only when the tab loaded its DOM tree but not resources like images yet:
+If you only want to wait for the DOM tree to be ready, but not wait for resources like images, use this line instead:
 
 ```js
-//#immediate
 await domReady()
 ```
 

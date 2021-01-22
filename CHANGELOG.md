@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 1.8.0 (22-01-2020)
+
+-   Make all scripts immediate by default, use `await domReady()` or `await pageReady()` to wait for the page to load
+
 ### Version 1.7.3 (03-10-2020)
 
 -   Make `hide` hide the provided selector with `display: none !important;` to ensure the rule is not overriden
