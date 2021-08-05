@@ -190,7 +190,7 @@ declare(
 //  only after the DOM is ready
 declare(
     "pageReady",
-    () => new Promise((resolve) => (isPageReady ? resolve() : window.addEventListener("load", () => callback())))
+    () => new Promise((resolve) => (isPageReady ? resolve() : window.addEventListener("load", () => resolve())))
 )
 
 // Get informations on the current URL
