@@ -678,7 +678,8 @@ function startup() {
             )
         }
 
-        currentDomain = match[2]
+        // Special handling for local files
+        currentDomain = match[1] === "file" ? "<files>" : match[2]
 
         console.debug("Parsed domain: " + currentDomain)
 

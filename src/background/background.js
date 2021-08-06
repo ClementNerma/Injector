@@ -103,19 +103,24 @@ Promise.all([
             return
         }
 
-        const _domain = tab.url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/)
+        const match = tab.url.match(/^([a-zA-Z]+):\/\/\/?([^\/]+)(?=$|\/.*$)/)
 
-        if (!_domain) {
+        if (!match) {
             console.debug(`Failed to parse domain name for URL: ${tab.url} (probably an internal URL)`)
             return
         }
 
-        if (!SUPPORTED_PROTOCOLS.includes(_domain[1])) {
-            console.debug(`Ignoring script injection for unsupported protocol "${_domain[1]}"`)
+        const [_, protocol, _domain] = match
+
+        if (!SUPPORTED_PROTOCOLS.includes(protocol)) {
+            console.debug(`Ignoring script injection for unsupported protocol "${protocol}"`)
             return
         }
 
-        const domain = _domain[2]
+        // Special handling for local files
+        const domain = protocol === "file" ? "<files>" : _domain
+
+        console.debug(`Matched URL "${tab.url}" as domain "${domain}"`)
 
         // Retrieve scripts from the storage
         chrome.storage.sync.get(null, (scripts) => {
