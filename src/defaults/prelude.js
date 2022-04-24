@@ -25,6 +25,7 @@ const {
     parallel,
     matchRegex,
     createEl,
+    injectScript,
     download,
     domReady,
     pageReady,

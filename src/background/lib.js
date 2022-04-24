@@ -163,6 +163,18 @@ declare("createEl", (tagName, attributes, content, eventListeners) => {
     return el
 })
 
+// Inject a function into the page
+declare("injectScript", (callback) => {
+    $lib.waitFor("head", (head) =>
+        head.appendChild(
+            $lib.createEl("script", {
+                type: "text/javascript",
+                src: "data:text/javascript," + encodeURIComponent(`(${callback.toString()})()`),
+            })
+        )
+    )
+})
+
 // Download an in-memory buffer to a file
 declare("download", (text, filename = "file.txt", mimeType = "text/plain") => {
     const blob = new Blob([text], { type: mimeType })
@@ -188,10 +200,7 @@ declare(
 // Wait for the document to be fully loaded
 // Useful for immediate scripts that also want to run another function
 //  only after the DOM is ready
-declare(
-    "pageReady",
-    () => new Promise((resolve) => (isPageReady ? resolve() : window.addEventListener("load", () => resolve())))
-)
+declare("pageReady", () => new Promise((resolve) => (isPageReady ? resolve() : window.addEventListener("load", () => resolve()))))
 
 // Get informations on the current URL
 declare("loc", window.location)

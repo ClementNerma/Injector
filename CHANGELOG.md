@@ -1,5 +1,9 @@
 # Changelog
 
+### Version 1.8.4 (24-04-2022)
+
+-   Add function `injectScript` to library
+
 ### Version 1.8.0 (22-01-2020)
 
 -   Make all scripts immediate by default, use `await domReady()` or `await pageReady()` to wait for the page to load
